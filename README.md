@@ -229,7 +229,7 @@ text
 
 ### License
 
-[Specify: MIT / Apache-2.0 / proprietary]. See `LICENSE`.
+The project is distributed under the MIT license. The full text is in the [`LICENSE`](LICENSE).
 
 ### Author
 
