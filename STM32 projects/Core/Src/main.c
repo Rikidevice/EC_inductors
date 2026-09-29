@@ -21,7 +21,12 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include <stdio.h>
+#include <string.h>
+extern UART_HandleTypeDef huart2;
 
+#define MCP3551_CS_LOW()   HAL_GPIO_WritePin(GPIOE, GPIO_PIN_15, GPIO_PIN_RESET)
+#define MCP3551_CS_HIGH()  HAL_GPIO_WritePin(GPIOE, GPIO_PIN_15, GPIO_PIN_SET)
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -65,12 +70,132 @@ static void MX_USART2_UART_Init(void);
 static void MX_USART3_Init(void);
 static void MX_SPI2_Init(void);
 /* USER CODE BEGIN PFP */
-
+uint8_t MCP3551_ReadData(SPI_HandleTypeDef *hspi, uint32_t *raw_data)
+{
+    uint8_t tx_buffer[4] = {0xFF, 0xFF, 0xFF, 0xFF};
+    uint8_t rx_buffer[4] = {0};
+    uint32_t timeout = HAL_GetTick() + 200;
+        while(HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_14) == GPIO_PIN_SET)
+    {
+        if(HAL_GetTick() > timeout) 
+        {
+            return 1;
+        }
+    }
+    MCP3551_CS_LOW();
+    HAL_Delay(100);
+    HAL_SPI_TransmitReceive(hspi, tx_buffer, rx_buffer, 4, HAL_MAX_DELAY);
+    MCP3551_CS_HIGH();
+    *raw_data = ((uint32_t)rx_buffer[0] << 24) |
+                ((uint32_t)rx_buffer[1] << 16) |
+                ((uint32_t)rx_buffer[2] << 8)  |
+                (uint32_t)rx_buffer[3];
+    
+    return 0;
+}
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+uint8_t n=0;
+uint8_t d=200;
+uint8_t i=7;
 
+
+uint32_t raw_data = 0;
+uint8_t status = 0;
+
+// Глобальные переменные
+uint8_t rx_byte;
+uint8_t rx_buffer[10];      // 11 байт данных после 0x0F
+uint8_t rx_state = 0;       // 0 = ждём 0x0F, 1 = собираем
+uint8_t rx_count = 0;
+uint32_t freq = 0;
+uint32_t duty = 0;
+uint8_t samples = 0;
+uint8_t cmd = 0;  // на самом деле 10-й байт, индекс 9
+uint32_t adc_value=0;
+
+//send UART2 PROTOTYPE FUNCTION
+
+
+//*****************************
+  void UART2_SendByte(uint8_t data) {
+    while(!(USART2->SR & USART_SR_TXE)); 
+    USART2->DR = data;                    
+}
+
+int putchar(int ch) {
+    if (ch == '\n') {
+        UART2_SendByte('\r');
+    }
+    UART2_SendByte((uint8_t)ch);
+    return ch;
+}
+//*****************************
+
+
+//*****************************
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+    if (huart->Instance == USART2)
+    {
+        if (rx_state == 0)
+        {
+            if (rx_byte == 0x0F)
+            {
+                rx_state = 1;
+                rx_count = 0;
+                HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_13);
+            }
+            HAL_UART_Receive_IT(&huart2, &rx_byte, 1);
+        }
+        else if (rx_state == 1)
+        {
+            if (rx_count < 10)  // ожидаем 10 байт после 0x0F
+            {
+                rx_buffer[rx_count++] = rx_byte;
+                HAL_UART_Receive_IT(&huart2, &rx_byte, 1);
+            }
+            
+            if (rx_count == 10)  // собрали все 10 байт
+            {
+                // Парсим (little-endian)
+                freq = (uint32_t)rx_buffer[0] |
+                       ((uint32_t)rx_buffer[1] << 8) |
+                       ((uint32_t)rx_buffer[2] << 16) |
+                       ((uint32_t)rx_buffer[3] << 24);
+                duty = (uint32_t)rx_buffer[4] |
+                       ((uint32_t)rx_buffer[5] << 8) |
+                       ((uint32_t)rx_buffer[6] << 16) |
+                       ((uint32_t)rx_buffer[7] << 24);
+                samples = rx_buffer[8];   // теперь samples = 10
+                cmd = rx_buffer[9];
+                
+                // Применить настройки ШИМ
+                // SetPWM(freq, duty);
+                
+                
+                // Формируем ответ
+                uint8_t response[6];
+                response[0] = 0xF0;
+                uint32_t result = adc_value;
+                response[1] = result & 0xFF;
+                response[2] = (result >> 8) & 0xFF;
+                response[3] = (result >> 16) & 0xFF;
+                response[4] = (result >> 24) & 0xFF;
+                response[5] = 0x01;
+                
+                HAL_UART_Transmit(&huart2, response, 6, 100);
+                
+                rx_state = 0;
+                HAL_UART_Receive_IT(&huart2, &rx_byte, 1);
+            }
+        }
+    }
+}
+
+//*****************************
 /* USER CODE END 0 */
 
 /**
@@ -108,7 +233,9 @@ int main(void)
   MX_USART3_Init();
   MX_SPI2_Init();
   /* USER CODE BEGIN 2 */
-
+  HAL_GPIO_WritePin(GPIOE, GPIO_PIN_13, GPIO_PIN_SET);
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+  HAL_UART_Receive_IT(&huart2, &rx_byte, 1);//обязательный запуск для первого запуска
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -118,6 +245,15 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+    for (n=1;n<=samples;n++)
+    {
+    TIM1->ARR=freq;
+    TIM1->CCR1=duty;
+    status = MCP3551_ReadData(&hspi2, &raw_data);
+    if (status == 0){
+    adc_value = (raw_data >> 6) & 0x3FFFFF;}
+    HAL_Delay(d);
+    }
   }
   /* USER CODE END 3 */
 }

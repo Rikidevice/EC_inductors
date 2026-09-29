@@ -44,4 +44,7 @@ D:\workspace\ kicad\PWR_MOD\STM32\ projects\EWARM\workspace\ diptrace\BrowseInfo
   D:\workspace\ kicad\PWR_MOD\STM32\ projects\EWARM\..\Drivers\STM32F4xx_HAL_Driver\Inc\stm32f4xx_hal_tim.h \
   D:\workspace\ kicad\PWR_MOD\STM32\ projects\EWARM\..\Drivers\STM32F4xx_HAL_Driver\Inc\stm32f4xx_hal_tim_ex.h \
   D:\workspace\ kicad\PWR_MOD\STM32\ projects\EWARM\..\Drivers\STM32F4xx_HAL_Driver\Inc\stm32f4xx_hal_uart.h \
-  D:\workspace\ kicad\PWR_MOD\STM32\ projects\EWARM\..\Drivers\STM32F4xx_HAL_Driver\Inc\stm32f4xx_hal_usart.h
+  D:\workspace\ kicad\PWR_MOD\STM32\ projects\EWARM\..\Drivers\STM32F4xx_HAL_Driver\Inc\stm32f4xx_hal_usart.h \
+  C:\Program\ Files\IAR\ Systems\Embedded\ Workbench\ 9.1\arm\inc\c\stdio.h \
+  C:\Program\ Files\IAR\ Systems\Embedded\ Workbench\ 9.1\arm\inc\c\string.h \
+  C:\Program\ Files\IAR\ Systems\Embedded\ Workbench\ 9.1\arm\inc\c\DLib_Product_string.h
