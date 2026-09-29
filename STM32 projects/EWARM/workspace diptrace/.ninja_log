@@ -1,0 +1,61 @@
+# ninja log v5
+1	210	8123808499038601	D:/workspace kicad/PWR_MOD/STM32 projects/EWARM/workspace diptrace/Obj/Application/EWARM/startup_stm32f407xx.o	cbc25e5e9c84f93d
+183	499	8123808501799375	D:/workspace kicad/PWR_MOD/STM32 projects/EWARM/workspace diptrace/Obj/Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal.o	35ba38115607aa7
+180	535	8123808502111738	D:/workspace kicad/PWR_MOD/STM32 projects/EWARM/workspace diptrace/Obj/Application/User/Core/stm32f4xx_hal_msp.o	a724dc9fe73f046c
+191	576	8123808502580374	D:/workspace kicad/PWR_MOD/STM32 projects/EWARM/workspace diptrace/Obj/Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal_cortex.o	fe748e5c0fa4790d
+176	607	8123808502736590	D:/workspace kicad/PWR_MOD/STM32 projects/EWARM/workspace diptrace/Obj/Application/User/Core/main.o	b1fd56fe2e5687b6
+214	684	8123808503673834	D:/workspace kicad/PWR_MOD/STM32 projects/EWARM/workspace diptrace/Obj/Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal_adc_ex.o	98520baf10bcc1b8
+511	711	8123808503830048	D:/workspace kicad/PWR_MOD/STM32 projects/EWARM/workspace diptrace/Obj/Application/User/Core/stm32f4xx_it.o	bb1260ba7958153
+187	772	8123808504454868	D:/workspace kicad/PWR_MOD/STM32 projects/EWARM/workspace diptrace/Obj/Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal_adc.o	afd590288752e684
+544	797	8123808504611155	D:/workspace kicad/PWR_MOD/STM32 projects/EWARM/workspace diptrace/Obj/Drivers/CMSIS/system_stm32f4xx.o	5cfbacca0b57aeee
+616	854	8123808505392167	D:/workspace kicad/PWR_MOD/STM32 projects/EWARM/workspace diptrace/Obj/Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal_exti.o	69a4003117635028
+586	888	8123808505704632	D:/workspace kicad/PWR_MOD/STM32 projects/EWARM/workspace diptrace/Obj/Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal_flash_ex.o	1edc62ca699c8197
+807	986	8123808506641798	D:/workspace kicad/PWR_MOD/STM32 projects/EWARM/workspace diptrace/Obj/Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal_i2c_ex.o	5f81a4fb0bf1782a
+782	1044	8123808507266690	D:/workspace kicad/PWR_MOD/STM32 projects/EWARM/workspace diptrace/Obj/Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal_flash.o	6794f4ffd691145b
+863	1071	8123808507422840	D:/workspace kicad/PWR_MOD/STM32 projects/EWARM/workspace diptrace/Obj/Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal_flash_ramfunc.o	cebf1b7363b5e9fd
+695	1121	8123808508047684	D:/workspace kicad/PWR_MOD/STM32 projects/EWARM/workspace diptrace/Obj/Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal_dma.o	3ef2e42476bf46e5
+721	1143	8123808508047684	D:/workspace kicad/PWR_MOD/STM32 projects/EWARM/workspace diptrace/Obj/Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal_dma_ex.o	e1f2c0134eec2420
+996	1238	8123808509141191	D:/workspace kicad/PWR_MOD/STM32 projects/EWARM/workspace diptrace/Obj/Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal_pwr.o	ba3581f8126e944e
+1054	1269	8123808509458910	D:/workspace kicad/PWR_MOD/STM32 projects/EWARM/workspace diptrace/Obj/Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal_pwr_ex.o	39c93528228a95aa
+1081	1412	8123808510996630	D:/workspace kicad/PWR_MOD/STM32 projects/EWARM/workspace diptrace/Obj/Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal_gpio.o	8001629ddc6763a
+1279	1517	8123808511933860	D:/workspace kicad/PWR_MOD/STM32 projects/EWARM/workspace diptrace/Obj/Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal_rcc_ex.o	44e180a86307e093
+1153	1583	8123808512558657	D:/workspace kicad/PWR_MOD/STM32 projects/EWARM/workspace diptrace/Obj/Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal_rcc.o	434231e58c88a82b
+1131	1908	8123808515841784	D:/workspace kicad/PWR_MOD/STM32 projects/EWARM/workspace diptrace/Obj/Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal_tim_ex.o	afe12b390381bc00
+1919	1963	8123808516466595	D:/workspace kicad/PWR_MOD/STM32 projects/EWARM/workspace diptrace/Obj/Drivers/STM32F4xx_HAL_Driver/stm32f4xx_ll_adc.o	520867e939d48dc4
+1594	2174	8123808518497330	D:/workspace kicad/PWR_MOD/STM32 projects/EWARM/workspace diptrace/Obj/Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal_usart.o	41175f12037017d9
+1421	2216	8123808518809740	D:/workspace kicad/PWR_MOD/STM32 projects/EWARM/workspace diptrace/Obj/Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal_spi.o	e0d1544cfbe5582b
+1527	2286	8123808519616115	D:/workspace kicad/PWR_MOD/STM32 projects/EWARM/workspace diptrace/Obj/Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal_uart.o	21e1b08317fb13de
+1247	2681	8123808523564402	D:/workspace kicad/PWR_MOD/STM32 projects/EWARM/workspace diptrace/Obj/Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal_tim.o	b73b27f9b2eefb69
+897	2823	8123808524929608	D:/workspace kicad/PWR_MOD/STM32 projects/EWARM/workspace diptrace/Obj/Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal_i2c.o	a996dd30ee5160ff
+2833	3212	8123808528943740	D:/workspace kicad/PWR_MOD/STM32 projects/EWARM/workspace diptrace/Exe/workspace diptrace.out	4a16aad0cfc626c3
+3246	3305	8123808529931156	D:/workspace kicad/PWR_MOD/STM32 projects/EWARM/workspace diptrace/Exe/workspace diptrace.hex	f213439bdece34f4
+7	30	8123810890524553	D:/workspace kicad/PWR_MOD/STM32 projects/EWARM/workspace diptrace/Obj/Application/EWARM/startup_stm32f407xx.o	cbc25e5e9c84f93d
+34	259	8123810892771767	D:/workspace kicad/PWR_MOD/STM32 projects/EWARM/workspace diptrace/Obj/Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal.o	35ba38115607aa7
+11	273	8123810892927993	D:/workspace kicad/PWR_MOD/STM32 projects/EWARM/workspace diptrace/Obj/Application/User/Core/stm32f4xx_hal_msp.o	a724dc9fe73f046c
+25	299	8123810892927993	D:/workspace kicad/PWR_MOD/STM32 projects/EWARM/workspace diptrace/Obj/Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal_cortex.o	fe748e5c0fa4790d
+18	375	8123810894021414	D:/workspace kicad/PWR_MOD/STM32 projects/EWARM/workspace diptrace/Obj/Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal_adc_ex.o	98520baf10bcc1b8
+15	397	8123810894021414	D:/workspace kicad/PWR_MOD/STM32 projects/EWARM/workspace diptrace/Obj/Application/User/Core/main.o	b1fd56fe2e5687b6
+269	482	8123810895114932	D:/workspace kicad/PWR_MOD/STM32 projects/EWARM/workspace diptrace/Obj/Drivers/CMSIS/system_stm32f4xx.o	5cfbacca0b57aeee
+283	502	8123810895114932	D:/workspace kicad/PWR_MOD/STM32 projects/EWARM/workspace diptrace/Obj/Application/User/Core/stm32f4xx_it.o	bb1260ba7958153
+21	526	8123810895427293	D:/workspace kicad/PWR_MOD/STM32 projects/EWARM/workspace diptrace/Obj/Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal_adc.o	afd590288752e684
+406	646	8123810896677014	D:/workspace kicad/PWR_MOD/STM32 projects/EWARM/workspace diptrace/Obj/Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal_exti.o	69a4003117635028
+386	676	8123810896833198	D:/workspace kicad/PWR_MOD/STM32 projects/EWARM/workspace diptrace/Obj/Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal_flash.o	6794f4ffd691145b
+309	698	8123810896989388	D:/workspace kicad/PWR_MOD/STM32 projects/EWARM/workspace diptrace/Obj/Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal_dma_ex.o	e1f2c0134eec2420
+511	749	8123810897614232	D:/workspace kicad/PWR_MOD/STM32 projects/EWARM/workspace diptrace/Obj/Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal_flash_ex.o	1edc62ca699c8197
+536	851	8123810898681946	D:/workspace kicad/PWR_MOD/STM32 projects/EWARM/workspace diptrace/Obj/Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal_gpio.o	8001629ddc6763a
+686	865	8123810898681946	D:/workspace kicad/PWR_MOD/STM32 projects/EWARM/workspace diptrace/Obj/Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal_i2c_ex.o	5f81a4fb0bf1782a
+491	879	8123810898681946	D:/workspace kicad/PWR_MOD/STM32 projects/EWARM/workspace diptrace/Obj/Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal_dma.o	3ef2e42476bf46e5
+657	902	8123810898994312	D:/workspace kicad/PWR_MOD/STM32 projects/EWARM/workspace diptrace/Obj/Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal_pwr_ex.o	39c93528228a95aa
+708	931	8123810899306734	D:/workspace kicad/PWR_MOD/STM32 projects/EWARM/workspace diptrace/Obj/Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal_pwr.o	ba3581f8126e944e
+759	988	8123810900087813	D:/workspace kicad/PWR_MOD/STM32 projects/EWARM/workspace diptrace/Obj/Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal_flash_ramfunc.o	cebf1b7363b5e9fd
+998	1261	8123810902929963	D:/workspace kicad/PWR_MOD/STM32 projects/EWARM/workspace diptrace/Obj/Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal_rcc_ex.o	44e180a86307e093
+875	1288	8123810903086175	D:/workspace kicad/PWR_MOD/STM32 projects/EWARM/workspace diptrace/Obj/Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal_rcc.o	434231e58c88a82b
+1271	1313	8123810903398539	D:/workspace kicad/PWR_MOD/STM32 projects/EWARM/workspace diptrace/Obj/Drivers/STM32F4xx_HAL_Driver/stm32f4xx_ll_adc.o	520867e939d48dc4
+941	1621	8123810906366552	D:/workspace kicad/PWR_MOD/STM32 projects/EWARM/workspace diptrace/Obj/Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal_tim_ex.o	afe12b390381bc00
+888	1682	8123810906991458	D:/workspace kicad/PWR_MOD/STM32 projects/EWARM/workspace diptrace/Obj/Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal_spi.o	e0d1544cfbe5582b
+1322	1874	8123810909022181	D:/workspace kicad/PWR_MOD/STM32 projects/EWARM/workspace diptrace/Obj/Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal_usart.o	41175f12037017d9
+1298	2018	8123810910402945	D:/workspace kicad/PWR_MOD/STM32 projects/EWARM/workspace diptrace/Obj/Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal_uart.o	21e1b08317fb13de
+912	2385	8123810914026067	D:/workspace kicad/PWR_MOD/STM32 projects/EWARM/workspace diptrace/Obj/Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal_tim.o	b73b27f9b2eefb69
+861	2662	8123810916840473	D:/workspace kicad/PWR_MOD/STM32 projects/EWARM/workspace diptrace/Obj/Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal_i2c.o	a996dd30ee5160ff
+2671	2739	8123810917621797	D:/workspace kicad/PWR_MOD/STM32 projects/EWARM/workspace diptrace/Exe/workspace diptrace.out	4a16aad0cfc626c3
+2776	2784	8123810918246444	D:/workspace kicad/PWR_MOD/STM32 projects/EWARM/workspace diptrace/Exe/workspace diptrace.hex	f213439bdece34f4
