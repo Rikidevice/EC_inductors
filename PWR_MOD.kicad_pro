@@ -80,19 +80,7 @@
           ""
         ],
         [
-          "clearance|143600000|137400000|15c48a90-96e3-46ad-a7fd-4705afe9aa5e|5e1eef45-ca4f-42d6-9243-5926b7186665",
-          ""
-        ],
-        [
-          "clearance|145852500|137200000|36bbd14d-6cbf-4b82-9240-2f09a7800187|a1fb64ef-b888-4d2c-9e47-a6f30bff98f9",
-          ""
-        ],
-        [
           "clearance|145852500|138200000|603cac20-322f-4ab4-b125-46a220b7c5f3|e3c9fedc-3a67-4fa7-bebe-cd70d4f57e67",
-          ""
-        ],
-        [
-          "clearance|145852500|139200000|7e05a6e4-4520-490b-9015-9099d6ac1843|8972aa8e-74c0-4f9f-87d8-1fdddb58ac8e",
           ""
         ],
         [
@@ -101,10 +89,6 @@
         ],
         [
           "clearance|92887500|126600000|fa6a730e-f352-4255-a8c1-2d90379377c2|4a878eed-b9b7-4ffe-b54a-df37cd416927",
-          ""
-        ],
-        [
-          "clearance|93267500|124600000|8e9526a3-ca13-47e6-aa66-e9fc5e0dfed4|5ff56d1e-aa0d-41fa-b64e-632ad9c6583c",
           ""
         ],
         [
@@ -649,7 +633,7 @@
     "last_paths": {
       "idf": "",
       "netlist": "",
-      "plot": "",
+      "plot": "EC_indictions_ver_2/",
       "specctra_dsn": "",
       "vrml": ""
     },
@@ -793,7 +777,7 @@
         "uuid": "36c4ce45-906a-47f8-8f3a-15d713e8932a"
       }
     ],
-    "used_designators": "L1-3,D1-6,D8-11,nRST_STM32,#PWR1-17,PWR_DC1,C1-30,C34-60,R1-105,J1-7,J11,BAT1,U1-22,Y1-2,18b20,DD1,DHT22,pH1,SSD1306,EN_ESP32,Q1-7,RST_ESP32,DC::DC1,GAIN1-2,A1-2",
+    "used_designators": "nRST_STM32,#PWR1-17,D1-6,D8-11,L1-3,PWR_DC1,C1-30,C34-60,J1-7,J11,R1-105,BAT1,U1-22,Y1-2,18b20,DD1,DHT22,EN_ESP32,SSD1306,pH1,Q1-7,RST_ESP32,DC::DC1,GAIN1-2,A1-2",
     "variants": []
   },
   "sheets": [
