@@ -18080,87 +18080,8 @@
 		(path "/dc8042fc-8542-4aa9-984c-e1fdb8bf2b30")
 		(sheetname "/Rx & Tx/")
 		(sheetfile "без_имени.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
-		(fp_line
-			(start 14.2 0)
-			(end 12.24 0)
-			(stroke
-				(width 0.12)
-				(type solid)
-			)
-			(layer "F.SilkS")
-			(uuid "b5d1eb96-ea64-4e72-a62b-4f614a42c8b5")
-		)
-		(fp_line
-			(start 1.04 0)
-			(end 3 0)
-			(stroke
-				(width 0.12)
-				(type solid)
-			)
-			(layer "F.SilkS")
-			(uuid "89806bb5-832b-41c0-bc28-9cc718138867")
-		)
-		(fp_rect
-			(start 3 -1.72)
-			(end 12.24 1.72)
-			(stroke
-				(width 0.12)
-				(type solid)
-			)
-			(fill no)
-			(layer "F.SilkS")
-			(uuid "4ea163ee-8690-485d-ba26-7142c6cbd56e")
-		)
-		(fp_rect
-			(start -1.05 -1.85)
-			(end 16.29 1.85)
-			(stroke
-				(width 0.05)
-				(type solid)
-			)
-			(fill no)
-			(layer "F.CrtYd")
-			(uuid "5385fb71-e9a0-46ea-9a87-e0ab6db13ba4")
-		)
-		(fp_line
-			(start 15.24 0)
-			(end 12.12 0)
-			(stroke
-				(width 0.1)
-				(type solid)
-			)
-			(layer "F.Fab")
-			(uuid "70c3f8f7-a4ac-4862-a6eb-1ff3f48e3f84")
-		)
-		(fp_line
-			(start 0 0)
-			(end 3.12 0)
-			(stroke
-				(width 0.1)
-				(type solid)
-			)
-			(layer "F.Fab")
-			(uuid "044efc57-7fe2-4ee5-852c-d449df46854c")
-		)
-		(fp_rect
-			(start 3.12 -1.6)
-			(end 12.12 1.6)
-			(stroke
-				(width 0.1)
-				(type solid)
-			)
-			(fill no)
-			(layer "F.Fab")
-			(uuid "6a5af3fb-3970-4f48-8820-8040a4c5a086")
-		)
 		(pad "1" thru_hole circle
 			(at 0 0 90)
 			(size 1.6 1.6)
@@ -30836,87 +30757,8 @@
 		(path "/cf73af28-e9eb-414c-840a-8cb9f56d4ae2")
 		(sheetname "/Rx & Tx/")
 		(sheetfile "без_имени.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
-		(fp_line
-			(start 14.2 0)
-			(end 12.24 0)
-			(stroke
-				(width 0.12)
-				(type solid)
-			)
-			(layer "F.SilkS")
-			(uuid "9ad25522-a9ca-4d02-9263-36175333518b")
-		)
-		(fp_line
-			(start 1.04 0)
-			(end 3 0)
-			(stroke
-				(width 0.12)
-				(type solid)
-			)
-			(layer "F.SilkS")
-			(uuid "cdd1d4f6-1948-44d8-8b3e-f5f1ab502f90")
-		)
-		(fp_rect
-			(start 3 -1.72)
-			(end 12.24 1.72)
-			(stroke
-				(width 0.12)
-				(type solid)
-			)
-			(fill no)
-			(layer "F.SilkS")
-			(uuid "e35f18bf-93c2-4379-bf73-562d34fc8642")
-		)
-		(fp_rect
-			(start -1.05 -1.85)
-			(end 16.29 1.85)
-			(stroke
-				(width 0.05)
-				(type solid)
-			)
-			(fill no)
-			(layer "F.CrtYd")
-			(uuid "0a527dd6-3216-4d20-9401-9b63a81eaf7b")
-		)
-		(fp_line
-			(start 15.24 0)
-			(end 12.12 0)
-			(stroke
-				(width 0.1)
-				(type solid)
-			)
-			(layer "F.Fab")
-			(uuid "ab78f83b-9ae2-4513-925d-76a8b750ff68")
-		)
-		(fp_line
-			(start 0 0)
-			(end 3.12 0)
-			(stroke
-				(width 0.1)
-				(type solid)
-			)
-			(layer "F.Fab")
-			(uuid "ee37e751-87e8-4b06-ac25-547a464fb837")
-		)
-		(fp_rect
-			(start 3.12 -1.6)
-			(end 12.12 1.6)
-			(stroke
-				(width 0.1)
-				(type solid)
-			)
-			(fill no)
-			(layer "F.Fab")
-			(uuid "a0129a82-b6e8-46e6-a839-9a3f4cbce407")
-		)
 		(pad "1" thru_hole circle
 			(at 0 0 90)
 			(size 1.6 1.6)
@@ -34470,7 +34312,7 @@
 		(descr "Diode, DO-41_SOD81 series, Axial, Horizontal, pin pitch=10.16mm, length*diameter=5.2*2.7mm^2, https://www.diodes.com/assets/Package-Files/DO-41-Plastic.pdf")
 		(tags "Diode DO-41_SOD81 series Axial Horizontal pin pitch 10.16mm  length 5.2mm diameter 2.7mm")
 		(property "Reference" "D5"
-			(at 5.08 2.47 90)
+			(at 5.08 2.47 270)
 			(layer "B.SilkS")
 			(hide yes)
 			(uuid "aed83f6d-e794-466c-b97e-a3fb00872b30")
@@ -34483,7 +34325,7 @@
 			)
 		)
 		(property "Value" "1N4007"
-			(at 5.08 -2.47 90)
+			(at 5.08 -2.47 270)
 			(layer "B.Fab")
 			(hide yes)
 			(uuid "b6ed58c3-b05a-4b0d-a0ef-2b0868ea262b")
@@ -34496,7 +34338,7 @@
 			)
 		)
 		(property "Datasheet" "http://www.vishay.com/docs/88503/1n4001.pdf"
-			(at 0 0 90)
+			(at 0 0 270)
 			(layer "B.Fab")
 			(hide yes)
 			(uuid "4085b095-77aa-4dec-8f9d-19d015d4f9fd")
@@ -34508,7 +34350,7 @@
 			)
 		)
 		(property "Description" "1000V 1A General Purpose Rectifier Diode, DO-41"
-			(at 0 0 90)
+			(at 0 0 270)
 			(layer "B.Fab")
 			(hide yes)
 			(uuid "cbe2b5d9-35f9-46c3-869e-83dbac3e50a5")
@@ -34551,149 +34393,10 @@
 		(path "/ac2f3aec-9a53-4bfb-bcf9-7d2eb9b43bc3")
 		(sheetname "/Rx & Tx/")
 		(sheetfile "без_имени.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
-		(fp_line
-			(start 8.82 0)
-			(end 7.8 0)
-			(stroke
-				(width 0.12)
-				(type solid)
-			)
-			(layer "B.SilkS")
-			(uuid "f37c1917-33c1-4d56-8c58-e93c82d62b16")
-		)
-		(fp_line
-			(start 1.34 0)
-			(end 2.36 0)
-			(stroke
-				(width 0.12)
-				(type solid)
-			)
-			(layer "B.SilkS")
-			(uuid "4d210cc0-f348-4f4b-ab23-9c48e9dcb06d")
-		)
-		(fp_line
-			(start 3.38 1.47)
-			(end 3.38 -1.47)
-			(stroke
-				(width 0.12)
-				(type solid)
-			)
-			(layer "B.SilkS")
-			(uuid "182418d5-14a9-49bf-a140-beefa4d384d4")
-		)
-		(fp_line
-			(start 3.26 1.47)
-			(end 3.26 -1.47)
-			(stroke
-				(width 0.12)
-				(type solid)
-			)
-			(layer "B.SilkS")
-			(uuid "13176e5f-6ba1-4014-bcb2-8d1b25b7ab6b")
-		)
-		(fp_line
-			(start 3.14 1.47)
-			(end 3.14 -1.47)
-			(stroke
-				(width 0.12)
-				(type solid)
-			)
-			(layer "B.SilkS")
-			(uuid "85dffd62-7dc6-4f42-bac4-934acacdbfd0")
-		)
-		(fp_rect
-			(start 2.36 1.47)
-			(end 7.8 -1.47)
-			(stroke
-				(width 0.12)
-				(type solid)
-			)
-			(fill no)
-			(layer "B.SilkS")
-			(uuid "4ee7225c-5486-48ff-8bad-16493777e5a4")
-		)
-		(fp_rect
-			(start -1.35 1.6)
-			(end 11.51 -1.6)
-			(stroke
-				(width 0.05)
-				(type solid)
-			)
-			(fill no)
-			(layer "B.CrtYd")
-			(uuid "ef919f91-3c5b-4adc-86e6-170479021396")
-		)
-		(fp_line
-			(start 10.16 0)
-			(end 7.68 0)
-			(stroke
-				(width 0.1)
-				(type solid)
-			)
-			(layer "B.Fab")
-			(uuid "754844c3-41b4-46f4-aedc-66d482f01365")
-		)
-		(fp_line
-			(start 0 0)
-			(end 2.48 0)
-			(stroke
-				(width 0.1)
-				(type solid)
-			)
-			(layer "B.Fab")
-			(uuid "1265e3fd-fb90-4308-ac94-79f1ac74675c")
-		)
-		(fp_line
-			(start 3.36 1.35)
-			(end 3.36 -1.35)
-			(stroke
-				(width 0.1)
-				(type solid)
-			)
-			(layer "B.Fab")
-			(uuid "d8f472b1-b893-4ef6-af67-d1c3f3702271")
-		)
-		(fp_line
-			(start 3.26 1.35)
-			(end 3.26 -1.35)
-			(stroke
-				(width 0.1)
-				(type solid)
-			)
-			(layer "B.Fab")
-			(uuid "2b2c882f-a66e-42ac-8729-4e5cce17e0a0")
-		)
-		(fp_line
-			(start 3.16 1.35)
-			(end 3.16 -1.35)
-			(stroke
-				(width 0.1)
-				(type solid)
-			)
-			(layer "B.Fab")
-			(uuid "7fc855e2-5489-4881-9977-b59ed3b35bda")
-		)
-		(fp_rect
-			(start 2.48 1.35)
-			(end 7.68 -1.35)
-			(stroke
-				(width 0.1)
-				(type solid)
-			)
-			(fill no)
-			(layer "B.Fab")
-			(uuid "250a7c05-ac2d-415d-a75d-90d31a9ce230")
-		)
 		(fp_text user "K"
-			(at 0 2.1 90)
+			(at 0 2.1 270)
 			(layer "B.Fab")
 			(uuid "c16e1604-1b1a-4b04-8df8-13888ec000fa")
 			(effects

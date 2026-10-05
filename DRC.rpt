@@ -1,0 +1,127 @@
+** Drc report for PWR_MOD.kicad_pcb **
+** Created on 2026-10-05T14:27:10 **
+** Report includes: Errors, Warnings, Exclusions **
+
+** Found 31 DRC violations **
+[clearance]: Нарушение зазора ( зазор 0,2000 mm; текущий 0,1800 mm)
+    Local override; error (excluded)
+    @(95.1350 mm, 125.5000 mm): Pad 2 [Net-(A1-MS2)] of R92 on F.Cu
+    @(95.9500 mm, 125.5000 mm): Pad 1 [+3.3 VDDA] of R92 on F.Cu
+[clearance]: Нарушение зазора ( зазор 0,2000 mm; текущий 0,1800 mm)
+    Local override; error (excluded)
+    @(95.1350 mm, 124.5000 mm): Pad 2 [Net-(A1-MS3)] of R93 on F.Cu
+    @(95.9500 mm, 124.5000 mm): Pad 1 [+3.3 VDDA] of R93 on F.Cu
+[clearance]: Нарушение зазора ( зазор 0,2000 mm; текущий 0,1800 mm)
+    Local override; error (excluded)
+    @(143.0025 mm, 139.3000 mm): Pad 1 [+3.3 VDDA] of R102 on F.Cu
+    @(143.8175 mm, 139.3000 mm): Pad 2 [Net-(A2-MS3)] of R102 on F.Cu
+[clearance]: Нарушение зазора ( зазор 0,2000 mm; текущий 0,1800 mm)
+    Local override; error (excluded)
+    @(146.4500 mm, 138.3000 mm): Pad 1 [GND_0] of R104 on F.Cu
+    @(145.6350 mm, 138.3000 mm): Pad 2 [Net-(A2-MS2)] of R104 on F.Cu
+[clearance]: Нарушение зазора ( зазор 0,2000 mm; текущий 0,1800 mm)
+    Local override; error (excluded)
+    @(143.0025 mm, 137.3000 mm): Pad 1 [+3.3 VDDA] of R100 on F.Cu
+    @(143.8175 mm, 137.3000 mm): Pad 2 [Net-(A2-MS1)] of R100 on F.Cu
+[clearance]: Нарушение зазора ( зазор 0,2000 mm; текущий 0,1800 mm)
+    Local override; error (excluded)
+    @(145.6350 mm, 137.3000 mm): Pad 2 [Net-(A2-MS1)] of R103 on F.Cu
+    @(146.4500 mm, 137.3000 mm): Pad 1 [GND_0] of R103 on F.Cu
+[clearance]: Нарушение зазора ( зазор 0,2000 mm; текущий 0,1800 mm)
+    Local override; error (excluded)
+    @(143.8175 mm, 138.3000 mm): Pad 2 [Net-(A2-MS2)] of R101 on F.Cu
+    @(143.0025 mm, 138.3000 mm): Pad 1 [+3.3 VDDA] of R101 on F.Cu
+[clearance]: Нарушение зазора ( зазор 0,2000 mm; текущий 0,1800 mm)
+    Local override; error (excluded)
+    @(92.6700 mm, 125.5000 mm): Pad 1 [GND_0] of R89 on F.Cu
+    @(93.4850 mm, 125.5000 mm): Pad 2 [Net-(A1-MS2)] of R89 on F.Cu
+[clearance]: Нарушение зазора ( зазор 0,2000 mm; текущий 0,1800 mm)
+    Local override; error (excluded)
+    @(93.4850 mm, 126.5000 mm): Pad 2 [Net-(A1-MS1)] of R90 on F.Cu
+    @(92.6700 mm, 126.5000 mm): Pad 1 [GND_0] of R90 on F.Cu
+[hole_clearance]: Нарушение зазора между отв. (ограничения настроек отверстия зазор 0,2500 mm; текущий 0,1944 mm)
+    Rule: ограничения настроек отверстия; error (excluded)
+    @(192.5750 mm, 61.8300 mm): Pad A1 [GND_0] of J7 on F.Cu
+    @(193.6500 mm, 61.5200 mm): NPTH pad of J7
+[hole_clearance]: Нарушение зазора между отв. (ограничения настроек отверстия зазор 0,2500 mm; текущий 0,1944 mm)
+    Rule: ограничения настроек отверстия; error (excluded)
+    @(192.5750 mm, 61.8300 mm): Pad B12 [GND_0] of J7 on F.Cu
+    @(193.6500 mm, 61.5200 mm): NPTH pad of J7
+[clearance]: Нарушение зазора ( зазор 0,2000 mm; текущий 0,1800 mm)
+    Local override; error (excluded)
+    @(92.6700 mm, 124.5000 mm): Pad 1 [GND_0] of R88 on F.Cu
+    @(93.4850 mm, 124.5000 mm): Pad 2 [Net-(A1-MS3)] of R88 on F.Cu
+[hole_clearance]: Нарушение зазора между отв. (ограничения настроек отверстия зазор 0,2500 mm; текущий 0,1944 mm)
+    Rule: ограничения настроек отверстия; error (excluded)
+    @(192.5750 mm, 55.4300 mm): Pad A12 [GND_0] of J7 on F.Cu
+    @(193.6500 mm, 55.7400 mm): NPTH pad of J7
+[hole_clearance]: Нарушение зазора между отв. (ограничения настроек отверстия зазор 0,2500 mm; текущий 0,1944 mm)
+    Rule: ограничения настроек отверстия; error (excluded)
+    @(192.5750 mm, 55.4300 mm): Pad B1 [GND_0] of J7 on F.Cu
+    @(193.6500 mm, 55.7400 mm): NPTH pad of J7
+[clearance]: Нарушение зазора ( зазор 0,2000 mm; текущий 0,1800 mm)
+    Local override; error (excluded)
+    @(95.1350 mm, 126.5000 mm): Pad 2 [Net-(A1-MS1)] of R91 on F.Cu
+    @(95.9500 mm, 126.5000 mm): Pad 1 [+3.3 VDDA] of R91 on F.Cu
+[clearance]: Нарушение зазора ( зазор 0,2000 mm; текущий 0,1800 mm)
+    Local override; error (excluded)
+    @(146.4500 mm, 139.3000 mm): Pad 1 [GND_0] of R105 on F.Cu
+    @(145.6350 mm, 139.3000 mm): Pad 2 [Net-(A2-MS3)] of R105 on F.Cu
+[lib_footprint_mismatch]: Посад. место 'D_DO-41_SOD81_P10.16mm_Horizontal' не соответствует копии в библиотеке 'Diode_THT'
+    Local override; warning (excluded)
+    @(198.4000 mm, 101.2800 mm): Footprint D5
+[lib_footprint_mismatch]: Посад. место 'R_Axial_DIN0309_L9.0mm_D3.2mm_P15.24mm_Horizontal' не соответствует копии в библиотеке 'Resistor_THT'
+    Local override; warning (excluded)
+    @(198.4000 mm, 103.4500 mm): Footprint L2
+[lib_footprint_mismatch]: Посад. место 'R_Axial_DIN0309_L9.0mm_D3.2mm_P15.24mm_Horizontal' не соответствует копии в библиотеке 'Resistor_THT'
+    Local override; warning (excluded)
+    @(198.6500 mm, 124.3200 mm): Footprint L3
+[lib_footprint_mismatch]: Посад. место 'Pololu_Breakout-16_15.2x20.3mm' не соответствует копии в библиотеке 'Module'
+    Local override; warning (excluded)
+    @(93.0600 mm, 142.1400 mm): Footprint A1
+[lib_footprint_mismatch]: Посад. место 'HTSSOP-24-1EP_4.4x7.8mm_P0.65mm_EP3.4x7.8mm_Mask2.4x4.68mm' не соответствует копии в библиотеке 'Package_SO'
+    Local override; warning (excluded)
+    @(156.5125 mm, 131.8750 mm): Footprint U10
+[lib_footprint_mismatch]: Посад. место 'BarrelJack_GCT_DCJ200-10-A_Horizontal' не соответствует копии в библиотеке 'Connector_BarrelJack'
+    Local override; warning (excluded)
+    @(104.7000 mm, 58.2000 mm): Footprint J1
+[lib_footprint_mismatch]: Посад. место 'L_Changjiang_FXL1340' не соответствует копии в библиотеке 'Inductor_SMD'
+    Local override; warning (excluded)
+    @(117.7000 mm, 79.2000 mm): Footprint L1
+[lib_footprint_mismatch]: Посад. место 'L_0805_2012Metric_Pad1.05x1.20mm_HandSolder' не соответствует копии в библиотеке 'Inductor_SMD'
+    Local override; warning (excluded)
+    @(163.1750 mm, 138.1000 mm): Footprint C39
+[lib_footprint_mismatch]: Посад. место 'L_0805_2012Metric_Pad1.05x1.20mm_HandSolder' не соответствует копии в библиотеке 'Inductor_SMD'
+    Local override; warning (excluded)
+    @(135.6500 mm, 77.3740 mm): Footprint C5
+[lib_footprint_mismatch]: Посад. место 'Без имени' не соответствует копии в библиотеке '2'
+    Local override; warning (excluded)
+    @(154.8920 mm, 100.1118 mm): Footprint DD1
+[lib_footprint_mismatch]: Посад. место 'ESP32-WROOM-32' не соответствует копии в библиотеке 'RF_Module'
+    Local override; warning (excluded)
+    @(154.0550 mm, 63.0850 mm): Footprint U12
+[lib_footprint_mismatch]: Посад. место 'ER_OLEDM0.91_1x-I2C' не соответствует копии в библиотеке 'Display'
+    Local override; warning (excluded)
+    @(153.5300 mm, 85.2000 mm): Footprint SSD1306
+[lib_footprint_mismatch]: Посад. место 'Pololu_Breakout-16_15.2x20.3mm' не соответствует копии в библиотеке 'Module'
+    Local override; warning (excluded)
+    @(122.1500 mm, 142.0000 mm): Footprint A2
+[lib_footprint_mismatch]: Посад. место 'IDC-Header_2x10_P2.54mm_Vertical' не соответствует копии в библиотеке 'Connector_IDC'
+    Local override; warning (excluded)
+    @(96.6500 mm, 116.5500 mm): Footprint J2
+[lib_footprint_mismatch]: Посад. место 'DIP-8_W7.62mm_LongPads' не соответствует копии в библиотеке 'Package_DIP'
+    Local override; warning (excluded)
+    @(132.1800 mm, 117.9500 mm): Footprint U5
+
+** Found 0 unconnected pads **
+
+** Found 0 Footprint errors **
+
+** Ignored checks **
+    - Footprint has no courtyard defined
+    - Track endpoint not centered on via
+    - Tuning profile track geometries
+    - Footprint doesn't match symbol's footprint filters
+    - Footprint component type doesn't match footprint pads
+
+** End of Report **
