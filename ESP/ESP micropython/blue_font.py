@@ -114,12 +114,40 @@ def _diag(x0, y0, dx, dy, length, thick):
     px = set()
     for i in range(length):
         cx, cy = x0 + dx * i, y0 + dy * i
-        # утолщение — по вертикали, вверх/вниз в зависимости от направления
         for off in range(thick):
             xx, yy = cx, cy + (off if dy > 0 else -off)
             if 0 <= xx < WIDTH and 0 <= yy < HEIGHT:
                 px.add((xx, yy))
     return list(px)
+
+
+# ─── ТОЧКИ ───
+def _dot_size():
+    dw = max(2, WIDTH  // 5)
+    dh = max(2, HEIGHT // 5)
+    return dw, dh
+
+
+def _dot_pixels():
+    """Точка '.' — по центру, у самого низа."""
+    dw, dh = _dot_size()
+    x0 = (WIDTH - dw) // 2
+    y0 = HEIGHT - dh
+    return [(x, y) for y in range(y0, HEIGHT) for x in range(x0, x0 + dw)]
+
+
+def _colon_pixels():
+    """Двоеточие ':' — две точки: в верхней и нижней трети."""
+    dw, dh = _dot_size()
+    x0 = (WIDTH - dw) // 2
+    y1 = HEIGHT // 3     - dh // 2      # верхняя точка
+    y2 = 2 * HEIGHT // 3 - dh // 2      # нижняя точка
+    px = []
+    for y0 in (y1, y2):
+        for y in range(max(0, y0), min(HEIGHT, y0 + dh)):
+            for x in range(x0, x0 + dw):
+                px.append((x, y))
+    return px
 
 
 # ─── цифры ───
@@ -191,30 +219,46 @@ _PATTERNS.update(_SYMBOLS)
 _BITS = (_A, _B, _C, _D, _E, _F, _G1, _G2, _H, _I, _J, _K, _L, _M)
 
 # ═══════════════════════════════════════════════════════
-#  СБОРКА ШРИФТА — размер глифа как в драйвере
+#  СБОРКА ШРИФТА
 # ═══════════════════════════════════════════════════════
-_GLYPH_SIZE = WIDTH * HEIGHT // 8     # так считает драйвер st7789py
+_GLYPH_SIZE = WIDTH * HEIGHT // 8
 
 
-def _build_glyph(pat):
+def _set_pixel(buf, x, y):
+    if ITALIC:
+        x = x + (HEIGHT - 1 - y) // 4
+    if 0 <= x < WIDTH and 0 <= y < HEIGHT:
+        idx = y * (WIDTH // 8) + (x >> 3)
+        if idx < _GLYPH_SIZE:
+            buf[idx] |= 1 << (7 - (x & 7))
+
+
+def _build_glyph(code):
+    ch  = chr(code)
+    pat = _PATTERNS.get(ch, 0)
     buf = bytearray(_GLYPH_SIZE)
+
+    # сегментные символы
     for bit in _BITS:
         if not (pat & bit):
             continue
         for (x, y) in _pixels_for(bit):
-            if ITALIC:
-                x = x + (HEIGHT - 1 - y) // 4
-            if 0 <= x < WIDTH and 0 <= y < HEIGHT:
-                idx = y * (WIDTH // 8) + (x >> 3)
-                if idx < _GLYPH_SIZE:
-                    buf[idx] |= 1 << (7 - (x & 7))
+            _set_pixel(buf, x, y)
+
+    # точечные символы
+    if ch == '.':
+        for (x, y) in _dot_pixels():
+            _set_pixel(buf, x, y)
+    elif ch == ':':
+        for (x, y) in _colon_pixels():
+            _set_pixel(buf, x, y)
+
     return buf
 
 
 _FONT = bytearray()
 for _code in range(256):
-    _pat = _PATTERNS.get(chr(_code), 0)
-    _FONT.extend(_build_glyph(_pat))
+    _FONT.extend(_build_glyph(_code))
 
 _FONT = bytes(_FONT)
 FONT = memoryview(_FONT)

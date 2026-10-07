@@ -1,0 +1,584 @@
+import struct
+import onewire, ds18x20
+import dht
+import time
+from machine import Pin, WDT, reset, I2C, ADC, SoftI2C, UART
+import ssd1306
+import network
+import socket
+
+time.sleep(5)
+
+# ========== ПОДКЛЮЧЕНИЕ К WI-FI ==========
+def connect_wifi(ssid, password, timeout=60):
+    wlan = network.WLAN(network.STA_IF)
+    wlan.active(True)
+    if not wlan.isconnected():
+        print('Connecting to WiFi...')
+        wlan.connect(ssid, password)
+        start_time = time.time()
+        while not wlan.isconnected():
+            if time.time() - start_time > timeout:
+                print("WiFi connection timeout!")
+                return None
+            time.sleep(0.5)
+    print('Network config:', wlan.ifconfig())
+    return wlan
+
+# ========== ГЛОБАЛЬНАЯ ПЕРЕМЕННАЯ ==========
+result = 0
+
+# ========== ИНИЦИАЛИЗАЦИЯ ДИСПЛЕЯ ==========
+i2c = I2C(sda=Pin(5), scl=Pin(4))
+display = ssd1306.SSD1306_I2C(128, 64, i2c)
+
+# ========== UART ДЛЯ TDS-МОДУЛЯ ==========
+uart = UART(1, baudrate=115200, tx=17, rx=16)
+
+# ========== ФИЛЬТР КАЛМАНА ==========
+class KalmanFilter:
+    def __init__(self, initial_value=0.0, process_noise=0.01, measurement_noise=1.0):
+        self.x = initial_value
+        self.p = 1.0
+        self.q = process_noise
+        self.r = measurement_noise
+    
+    def update(self, measurement):
+        self.p = self.p + self.q
+        k = self.p / (self.p + self.r)
+        self.x = self.x + k * (measurement - self.x)
+        self.p = (1 - k) * self.p
+        return self.x
+
+# ========== КАЛИБРОВОЧНАЯ ТАБЛИЦА (глобальная) ==========
+DEFAULT_CAL_TABLE = (
+    (1182323, 4.0),
+    (1199969, 344.0),
+    (1205153, 1310.0),
+    (1210169, 3624.0),
+)
+
+CAL_TABLE = list(DEFAULT_CAL_TABLE)
+
+def load_calibration():
+    global CAL_TABLE
+    try:
+        with open('calib.txt', 'r') as f:
+            lines = f.readlines()
+            new_table = []
+            for line in lines:
+                if line.strip():
+                    adc, ec = line.strip().split(',')
+                    new_table.append((int(adc), float(ec)))
+            if len(new_table) == 4:
+                CAL_TABLE = new_table
+                print("Calibration loaded from file")
+            else:
+                print("Invalid calibration file, using defaults")
+                CAL_TABLE = list(DEFAULT_CAL_TABLE)
+    except:
+        print("No calibration file, using defaults")
+        CAL_TABLE = list(DEFAULT_CAL_TABLE)
+
+def save_calibration(table):
+    try:
+        with open('calib.txt', 'w') as f:
+            for adc, ec in table:
+                f.write(f"{adc},{ec}\n")
+        print("Calibration saved")
+    except Exception as e:
+        print("Save error:", e)
+
+# ========== ПОЛНЫЙ ШРИФТ (simple_font) ==========
+simple_font = {
+    # Цифры
+    '0': [[1,1,1],[1,0,1],[1,0,1],[1,0,1],[1,1,1]],
+    '1': [[0,1,0],[1,1,0],[0,1,0],[0,1,0],[1,1,1]],
+    '2': [[1,1,1],[0,0,1],[1,1,1],[1,0,0],[1,1,1]],
+    '3': [[1,1,1],[0,0,1],[0,1,1],[0,0,1],[1,1,1]],
+    '4': [[1,0,1],[1,0,1],[1,1,1],[0,0,1],[0,0,1]],
+    '5': [[1,1,1],[1,0,0],[1,1,1],[0,0,1],[1,1,1]],
+    '6': [[1,1,1],[1,0,0],[1,1,1],[1,0,1],[1,1,1]],
+    '7': [[1,1,1],[0,0,1],[0,1,0],[0,1,0],[0,1,0]],
+    '8': [[1,1,1],[1,0,1],[1,1,1],[1,0,1],[1,1,1]],
+    '9': [[1,1,1],[1,0,1],[1,1,1],[0,0,1],[1,1,1]],
+    # Буквы (верхний регистр)
+    'A': [[0,1,0],[1,0,1],[1,1,1],[1,0,1],[1,0,1]],
+    'B': [[1,1,0],[1,0,1],[1,1,0],[1,0,1],[1,1,0]],
+    'C': [[1,1,1],[1,0,0],[1,0,0],[1,0,0],[1,1,1]],
+    'D': [[1,1,0],[1,0,1],[1,0,1],[1,0,1],[1,1,0]],
+    'E': [[1,1,1],[1,0,0],[1,1,0],[1,0,0],[1,1,1]],
+    'F': [[1,1,1],[1,0,0],[1,1,0],[1,0,0],[1,0,0]],
+    'G': [[1,1,1],[1,0,0],[1,0,1],[1,0,1],[1,1,1]],
+    'H': [[1,0,1],[1,0,1],[1,1,1],[1,0,1],[1,0,1]],
+    'I': [[1,1,1],[0,1,0],[0,1,0],[0,1,0],[1,1,1]],
+    'J': [[0,0,1],[0,0,1],[0,0,1],[1,0,1],[1,1,1]],
+    'K': [[1,0,1],[1,0,1],[1,1,0],[1,0,1],[1,0,1]],
+    'L': [[1,0,0],[1,0,0],[1,0,0],[1,0,0],[1,1,1]],
+    'M': [[1,0,1],[1,1,1],[1,1,1],[1,0,1],[1,0,1]],
+    'N': [[1,0,1],[1,1,1],[1,1,1],[1,1,1],[1,0,1]],
+    'O': [[1,1,1],[1,0,1],[1,0,1],[1,0,1],[1,1,1]],
+    'P': [[1,1,1],[1,0,1],[1,1,1],[1,0,0],[1,0,0]],
+    'Q': [[1,1,1],[1,0,1],[1,0,1],[1,1,1],[0,0,1]],
+    'R': [[1,1,1],[1,0,1],[1,1,0],[1,0,1],[1,0,1]],
+    'S': [[1,1,1],[1,0,0],[1,1,1],[0,0,1],[1,1,1]],
+    'T': [[1,1,1],[0,1,0],[0,1,0],[0,1,0],[0,1,0]],
+    'U': [[1,0,1],[1,0,1],[1,0,1],[1,0,1],[1,1,1]],
+    'V': [[1,0,1],[1,0,1],[1,0,1],[0,1,0],[0,1,0]],
+    'W': [[1,0,1],[1,0,1],[1,1,1],[1,1,1],[1,0,1]],
+    'X': [[1,0,1],[1,0,1],[0,1,0],[1,0,1],[1,0,1]],
+    'Y': [[1,0,1],[1,0,1],[0,1,0],[0,1,0],[0,1,0]],
+    'Z': [[1,1,1],[0,0,1],[0,1,0],[1,0,0],[1,1,1]],
+    # Буквы (нижний регистр)
+    'a': [[0,0,0],[0,0,0],[1,1,1],[0,0,1],[1,1,1]],
+    'b': [[1,0,0],[1,0,0],[1,1,1],[1,0,1],[1,1,1]],
+    'c': [[0,0,0],[0,0,0],[1,1,1],[1,0,0],[1,1,1]],
+    'd': [[0,0,1],[0,0,1],[1,1,1],[1,0,1],[1,1,1]],
+    'e': [[0,0,0],[0,0,0],[1,1,1],[1,1,1],[1,1,0]],
+    'f': [[0,1,1],[0,1,0],[1,1,1],[0,1,0],[0,1,0]],
+    'g': [[0,0,0],[1,1,1],[1,0,1],[1,1,1],[0,0,1]],
+    'h': [[1,0,0],[1,0,0],[1,1,1],[1,0,1],[1,0,1]],
+    'i': [[0,1,0],[0,0,0],[0,1,0],[0,1,0],[0,1,0]],
+    'j': [[0,0,1],[0,0,0],[0,0,1],[0,0,1],[1,1,0]],
+    'k': [[1,0,0],[1,0,0],[1,0,1],[1,1,0],[1,0,1]],
+    'l': [[0,1,0],[0,1,0],[0,1,0],[0,1,0],[0,0,1]],
+    'm': [[0,0,0],[0,0,0],[1,1,1],[1,1,1],[1,0,1]],
+    'n': [[0,0,0],[0,0,0],[1,1,1],[1,0,1],[1,0,1]],
+    'o': [[0,0,0],[0,0,0],[1,1,1],[1,0,1],[1,1,1]],
+    'p': [[0,0,0],[1,1,1],[1,0,1],[1,1,1],[1,0,0]],
+    'q': [[0,0,0],[1,1,1],[1,0,1],[1,1,1],[0,0,1]],
+    'r': [[0,0,0],[0,0,0],[1,1,1],[1,0,0],[1,0,0]],
+    's': [[0,0,0],[0,1,1],[1,1,0],[0,1,1],[1,1,0]],
+    't': [[0,1,0],[0,1,0],[1,1,1],[0,1,0],[0,1,1]],
+    'u': [[0,0,0],[0,0,0],[1,0,1],[1,0,1],[1,1,1]],
+    'v': [[0,0,0],[0,0,0],[1,0,1],[1,0,1],[0,1,0]],
+    'w': [[0,0,0],[0,0,0],[1,0,1],[1,1,1],[1,1,1]],
+    'x': [[0,0,0],[0,0,0],[1,0,1],[0,1,0],[1,0,1]],
+    'y': [[0,0,0],[1,0,1],[1,1,1],[0,0,1],[1,1,1]],
+    'z': [[0,0,0],[0,0,0],[1,1,1],[0,1,0],[1,1,1]],
+    # Символы
+    '.': [[0],[0],[0],[0],[1]],
+    ',': [[0],[0],[0],[0,1],[1,0]],
+    ':': [[0],[1],[0],[1],[0]],
+    ';': [[0],[1],[0],[0,1],[1,0]],
+    '!': [[1],[1],[1],[0],[1]],
+    '?': [[1,1,0],[0,0,1],[0,1,0],[0,0,0],[0,1,0]],
+    "'": [[1],[1],[0],[0],[0]],
+    '"': [[1,0,1],[1,0,1],[0,0,0],[0,0,0],[0,0,0]],
+    '(': [[0,1],[1,0],[1,0],[1,0],[0,1]],
+    ')': [[1,0],[0,1],[0,1],[0,1],[1,0]],
+    '[': [[1,1],[1,0],[1,0],[1,0],[1,1]],
+    ']': [[1,1],[0,1],[0,1],[0,1],[1,1]],
+    '{': [[0,1],[0,1],[1,0],[0,1],[0,1]],
+    '}': [[1,0],[1,0],[0,1],[1,0],[1,0]],
+    '<': [[0,0,1],[0,1,0],[1,0,0],[0,1,0],[0,0,1]],
+    '>': [[1,0,0],[0,1,0],[0,0,1],[0,1,0],[1,0,0]],
+    '/': [[0,0,1],[0,0,1],[0,1,0],[1,0,0],[1,0,0]],
+    '\\': [[1,0,0],[1,0,0],[0,1,0],[0,0,1],[0,0,1]],
+    '|': [[1],[1],[1],[1],[1]],
+    '-': [[0,0,0],[0,0,0],[1,1,1],[0,0,0],[0,0,0]],
+    '_': [[0,0,0],[0,0,0],[0,0,0],[0,0,0],[1,1,1]],
+    '=': [[0,0,0],[1,1,1],[0,0,0],[1,1,1],[0,0,0]],
+    '+': [[0,0,0],[0,1,0],[1,1,1],[0,1,0],[0,0,0]],
+    '*': [[0,0,0],[1,0,1],[0,1,0],[1,0,1],[0,0,0]],
+    '#': [[0,1,0],[1,1,1],[0,1,0],[1,1,1],[0,1,0]],
+    '@': [[1,1,1],[1,0,1],[1,1,1],[1,0,0],[1,1,1]],
+    '$': [[0,1,1],[1,0,0],[1,1,1],[0,0,1],[1,1,0]],
+    '%': [[1,0,1],[0,0,1],[0,1,0],[1,0,0],[1,0,1]],
+    '&': [[1,1,0],[1,0,0],[1,1,1],[1,0,1],[1,1,1]],
+    '^': [[0,1,0],[1,0,1],[0,0,0],[0,0,0],[0,0,0]],
+    '~': [[0,0,0],[0,1,1],[1,1,0],[0,0,0],[0,0,0]],
+    ' ': [[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0]],
+    '°': [[1,1,1],[1,0,1],[1,1,1],[0,0,0],[0,0,0]],
+}
+
+class SimpleFont:
+    def __init__(self, oled):
+        self.oled = oled
+        
+    def draw_char(self, char, x, y, color=1):
+        if char in simple_font:
+            glyph = simple_font[char]
+            for row in range(len(glyph)):
+                for col in range(len(glyph[row])):
+                    if glyph[row][col]:
+                        self.oled.pixel(x + col, y + row, color)
+            return len(glyph[0]) if glyph[0] else 1
+        return 3
+    
+    def text(self, string, x, y, color=1):
+        for char in string:
+            width = self.draw_char(char, x, y, color)
+            x += width + 1
+
+simple = SimpleFont(display)
+
+# ========== СТАРТОВОЕ ЗАПОЛНЕНИЕ ЭКРАНА ==========
+display.fill(0)
+simple.text("TDS Trends INDUCTION METHOD", 0, 0, 1)
+simple.text("Create an access point.", 0, 6, 1)
+simple.text("SSID: my || password:220319840", 0, 12, 1)
+simple.text("60-second timeout", 0, 18, 1)
+simple.text("if it fails to connect", 0, 24, 1)
+simple.text("to reconnect", 0, 30, 1)
+simple.text("Cycle the power.", 0, 36, 1)
+simple.text("Turn it off for 30 seconds.", 0, 42, 1)
+simple.text("and turn it back on", 0, 59, 1)
+display.show()
+
+# ========== ПОДКЛЮЧЕНИЕ WI-FI ==========
+wlan = connect_wifi("my", "220319840", 60)
+if wlan is not None:
+    ip_address = wlan.ifconfig()[0]
+else:
+    ip_address = None
+
+# ========== ВЕБ-СЕРВЕР ==========
+addr = socket.getaddrinfo('0.0.0.0', 80)[0][-1]
+server_socket = socket.socket()
+server_socket.bind(addr)
+server_socket.listen(1)
+server_socket.setblocking(False)
+
+# ========== ДАТЧИКИ ==========
+ow = onewire.OneWire(Pin(14, Pin.OPEN_DRAIN))
+ds = ds18x20.DS18X20(ow)
+
+# ========== ЗАГРУЗКА КАЛИБРОВКИ ==========
+load_calibration()
+
+# ========== ФУНКЦИИ ИЗМЕРЕНИЙ ==========
+def ONE_TDSEC(freq, duty, samples, cmd, timeout_ms=4000):
+    frame = bytearray()
+    frame.append(0x0F)
+    frame.extend(struct.pack('<I', freq))
+    frame.extend(struct.pack('<I', duty))
+    frame.append(samples)
+    frame.append(cmd)
+    uart.write(frame)
+    start = time.ticks_ms()
+    response = bytearray()
+    while time.ticks_diff(time.ticks_ms(), start) < timeout_ms:
+        if uart.any():
+            response.extend(uart.read())
+            if len(response) >= 6:
+                if response[0] == 0xF0:
+                    result = struct.unpack('<I', response[1:5])[0]
+                    return result
+                else:
+                    return None
+        time.sleep_ms(10)
+    return None
+
+def adc_to_microsiemens(adc_value, temp_c):
+    global CAL_TABLE
+    if adc_value is None:
+        return None
+
+    # Интерполяция / экстраполяция по глобальной таблице
+    num_points = len(CAL_TABLE)
+    if adc_value <= CAL_TABLE[0][0]:
+        x0, y0 = CAL_TABLE[0]
+        x1, y1 = CAL_TABLE[1]
+        k = (y1 - y0) / (x1 - x0)
+        ec = y0 + k * (adc_value - x0)
+    elif adc_value >= CAL_TABLE[-1][0]:
+        x0, y0 = CAL_TABLE[-2]
+        x1, y1 = CAL_TABLE[-1]
+        k = (y1 - y0) / (x1 - x0)
+        ec = y1 + k * (adc_value - x1)
+    else:
+        for i in range(num_points - 1):
+            if CAL_TABLE[i][0] <= adc_value <= CAL_TABLE[i+1][0]:
+                x0, y0 = CAL_TABLE[i]
+                x1, y1 = CAL_TABLE[i+1]
+                k = (y1 - y0) / (x1 - x0)
+                ec = y0 + k * (adc_value - x0)
+                break
+
+    ec = max(0.0, ec)
+    return round(ec, 2)
+
+# ========== ФУНКЦИЯ ДЛЯ ВЕБ-СТРАНИЦЫ (с формой калибровки) ==========
+def web_page(temp, tempDHT22, humDHT22, TDS, EC, adc_raw, freq, table):
+    # Формируем строки с текущими значениями для отображения в форме
+    rows_html = ""
+    for i, (adc, ec) in enumerate(table):
+        rows_html += f"""
+        <tr>
+            <td><input type="number" name="adc{i+1}" value="{adc}" step="1" style="width:120px;"></td>
+            <td><input type="number" name="ec{i+1}" value="{ec}" step="0.01" style="width:80px;"></td>
+        </tr>
+        """
+    
+    html = """<html><head><meta charset="UTF-8"><title>TDS Monitor</title>
+    <meta http-equiv="refresh" content="1">
+    <style>body{font-family:Arial;background:#1e1e2f;color:#fff;padding:20px;}
+    h1{color:#4fc3f7;} table{width:100%%;max-width:600px;border-collapse:collapse;}
+    td{padding:10px;border-bottom:1px solid #444;}
+    .label{font-weight:bold;color:#aaa;} .value{color:#4fc3f7;}
+    input{background:#333;color:#fff;border:1px solid #555;padding:4px;border-radius:4px;}
+    .btn{background:#4fc3f7;color:#000;padding:8px 16px;border:none;border-radius:4px;cursor:pointer;}
+    .btn:hover{background:#29b6f6;}
+    </style></head><body>
+    <h1>📊 TDS Trends – Induction Method</h1>
+    <h3>Текущие показания</h3>
+    <table>
+    <tr><td class="label">Частота</td><td class="value">%s Гц</td></tr>
+    <tr><td class="label">ADC сырой</td><td class="value">%s</td></tr>
+    <tr><td class="label">18B20 температура</td><td class="value">%.2f °C</td></tr>
+    <tr><td class="label">DHT22 температура</td><td class="value">%.2f °C</td></tr>
+    <tr><td class="label">DHT22 влажность</td><td class="value">%.2f %%</td></tr>
+    <tr><td class="label">TDS (отфильтрованный)</td><td class="value">%.0f ppm</td></tr>
+    <tr><td class="label">EC (отфильтрованный)</td><td class="value">%.0f µS/cm</td></tr>
+    </table>
+    <hr>
+    <h3>Калибровка (АЦП → EC при 20°C)</h3>
+    <form method="POST" action="/">
+        <table>
+        <tr><th>АЦП</th><th>EC (µS/cm)</th></tr>
+        %s
+        </table>
+        <br>
+        <input type="submit" value="Сохранить калибровку" class="btn">
+    </form>
+    <p style="color:#888;font-size:12px;">Обновлено при загрузке</p>
+    </body></html>""" % (freq, adc_raw, temp, tempDHT22, humDHT22, TDS, EC, rows_html)
+    return html
+
+# ========== ФИЛЬТР КАЛМАНА (экземпляр) ==========
+kalman = KalmanFilter(initial_value=0.0, process_noise=0.1, measurement_noise=1.0)
+
+# ========== ЛОГГИРОВАНИЕ В CSV ==========
+LOG_INTERVAL = 10  # секунд
+MAX_LOG_ENTRIES = 1000
+log_counter = 0
+log_index = 0  # индекс для перезаписи
+
+def init_log_file():
+    """Создаёт файл лога с заголовком, если его нет"""
+    try:
+        with open('log.csv', 'r') as f:
+            # Проверяем, есть ли заголовок
+            first_line = f.readline()
+            if not first_line.startswith('Частота;Температура_18B20;ADC_сырой;Температура_DHT22;Влажность_DHT22;EC_откалиброванный'):
+                # Если заголовка нет, пересоздаём
+                with open('log.csv', 'w') as fw:
+                    fw.write('Частота;Температура_18B20;ADC_сырой;Температура_DHT22;Влажность_DHT22;EC_откалиброванный\n')
+    except:
+        # Файл не существует - создаём
+        with open('log.csv', 'w') as f:
+            f.write('Частота;Температура_18B20;ADC_сырой;Температура_DHT22;Влажность_DHT22;EC_откалиброванный\n')
+
+def write_log_entry(freq, temp18b20, adc_raw, tempDHT22, humDHT22, ec):
+    """Записывает одну строку в CSV с перезаписью при достижении 1000 записей"""
+    global log_index
+    
+    # Формируем строку данных с заменой точки на запятую
+    freq_str = f"{freq:.0f}".replace('.', ',')
+    temp18b20_str = f"{temp18b20:.2f}".replace('.', ',')
+    adc_raw_str = str(adc_raw)
+    tempDHT22_str = f"{tempDHT22:.2f}".replace('.', ',')
+    humDHT22_str = f"{humDHT22:.2f}".replace('.', ',')
+    ec_str = f"{ec:.2f}".replace('.', ',')
+    
+    data_line = f"{freq_str};{temp18b20_str};{adc_raw_str};{tempDHT22_str};{humDHT22_str};{ec_str}\n"
+    
+    try:
+        # Сначала проверим существование файла и количество строк
+        line_count = 0
+        try:
+            with open('log.csv', 'r') as f:
+                # Считаем только количество строк, не загружая в память
+                for _ in f:
+                    line_count += 1
+        except:
+            # Файл не существует
+            line_count = 0
+        
+        if line_count <= 1:
+            # Файл пустой или только заголовок
+            with open('log.csv', 'w') as f:
+                f.write('Частота;Температура_18B20;ADC_сырой;Температура_DHT22;Влажность_DHT22;EC_откалиброванный\n')
+                f.write(data_line)
+            log_index = 1
+            return
+        
+        # Если записей меньше MAX_LOG_ENTRIES + 1 (заголовок)
+        if line_count < MAX_LOG_ENTRIES + 1:
+            # Просто добавляем в конец
+            with open('log.csv', 'a') as f:
+                f.write(data_line)
+            log_index = line_count  # номер последней записи
+        else:
+            # Нужно перезаписать файл
+            # Читаем заголовок
+            with open('log.csv', 'r') as f:
+                header = f.readline()
+            
+            # Создаём временный файл
+            temp_filename = 'log_temp.csv'
+            
+            # Копируем все строки кроме той, которую заменяем
+            with open('log.csv', 'r') as src, open(temp_filename, 'w') as dst:
+                # Пишем заголовок
+                dst.write(header)
+                
+                # Пропускаем заголовок
+                src.readline()
+                
+                # Читаем построчно и копируем, заменяя нужную строку
+                current_index = 0
+                for line in src:
+                    if current_index == log_index:
+                        # Заменяем эту строку
+                        dst.write(data_line)
+                    else:
+                        dst.write(line)
+                    current_index += 1
+            
+            # Заменяем оригинальный файл временным
+            try:
+                import os
+                os.remove('log.csv')
+                os.rename(temp_filename, 'log.csv')
+            except:
+                # Если не получается переименовать, пробуем по-другому
+                with open('log.csv', 'w') as f:
+                    with open(temp_filename, 'r') as src:
+                        for line in src:
+                            f.write(line)
+                try:
+                    os.remove(temp_filename)
+                except:
+                    pass
+            
+            # Увеличиваем индекс для следующей записи
+            log_index = (log_index + 1) % MAX_LOG_ENTRIES
+                
+    except Exception as e:
+        print("Log write error:", e)
+        # В случае ошибки пытаемся пересоздать файл
+        try:
+            with open('log.csv', 'w') as f:
+                f.write('Частота;Температура_18B20;ADC_сырой;Температура_DHT22;Влажность_DHT22;EC_откалиброванный\n')
+                f.write(data_line)
+            log_index = 1
+        except:
+            pass
+
+# Инициализируем файл лога
+init_log_file()
+
+# ========== ОСНОВНОЙ ЦИКЛ ==========
+last_log_time = time.time()
+
+while True:
+    # ---- Чтение 18B20 ----
+    roms = ds.scan()
+    try:
+        ds.convert_temp()
+        temp = ds.read_temp(roms[0])
+    except Exception as e:
+        temp = 200
+
+    # ---- Чтение DHT22 ----
+    sensor_dht22 = dht.DHT22(Pin(33))
+    try:
+        sensor_dht22.measure()
+        tempDHT22 = sensor_dht22.temperature()
+        humDHT22 = sensor_dht22.humidity()
+    except Exception as e:
+        tempDHT22 = 200
+        humDHT22 = 200
+
+    # ---- TDS-модуль ----
+    freq = 1200000
+    freq_ind = freq
+    freq = int(168000000 / freq)
+    dutypwm = int(freq / 2)
+
+    result = ONE_TDSEC(freq, dutypwm, 7, 1, timeout_ms=4000)
+
+    try:
+        EC = adc_to_microsiemens(result, temp)
+    except:
+        EC = 0
+
+    EC_filtered = kalman.update(EC)
+    TDS = EC_filtered * 0.5
+
+    # ---- ЛОГГИРОВАНИЕ ----
+    current_time = time.time()
+    if current_time - last_log_time >= LOG_INTERVAL:
+        write_log_entry(freq_ind, temp, result, tempDHT22, humDHT22, EC_filtered)
+        last_log_time = current_time
+
+    # ---- ОБРАБОТКА ВЕБ-ЗАПРОСОВ (GET и POST) ----
+    try:
+        conn, addr = server_socket.accept()
+        if conn:
+            request = conn.recv(1024)
+            print("Request from", addr)
+            
+            # Проверяем метод
+            if request.startswith(b'POST'):
+                # Ищем тело (после двух \r\n)
+                parts = request.split(b'\r\n\r\n', 1)
+                if len(parts) > 1:
+                    body = parts[1].decode()
+                    # Парсим параметры (application/x-www-form-urlencoded)
+                    params = {}
+                    for pair in body.split('&'):
+                        if '=' in pair:
+                            key, val = pair.split('=', 1)
+                            params[key] = val
+                    # Собираем новые пары
+                    new_table = []
+                    for i in range(1, 5):
+                        adc_key = f'adc{i}'
+                        ec_key = f'ec{i}'
+                        if adc_key in params and ec_key in params:
+                            try:
+                                adc = int(params[adc_key])
+                                ec = float(params[ec_key])
+                                new_table.append((adc, ec))
+                            except:
+                                pass
+                    if len(new_table) == 4:
+                        CAL_TABLE = new_table          # <-- убрали global
+                        save_calibration(CAL_TABLE)
+                        # Ответ с подтверждением
+                        response = b'HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n<html><body><h2>Калибровка сохранена!</h2><a href="/">Назад</a></body></html>'
+                        conn.send(response)
+                        conn.close()
+                        continue  # переходим к следующей итерации цикла
+            # GET-запрос: отдаём страницу
+            response = web_page(temp, tempDHT22, humDHT22, TDS, EC_filtered, result, freq_ind, CAL_TABLE)
+            conn.send('HTTP/1.1 200 OK\r\n')
+            conn.send('Content-Type: text/html\r\n')
+            conn.send('Connection: close\r\n\r\n')
+            conn.sendall(response)
+            conn.close()
+            print("Response sent")
+    except Exception as e:
+        # Если нет соединения – просто игнорируем
+        pass
+
+    # ---- ОБНОВЛЕНИЕ ДИСПЛЕЯ ----
+    display.fill(0)
+    simple.text("TDS Trends INDUCTION METHOD", 0, 0, 1)
+    simple.text("current frequency: "+f"{freq_ind:.0f} Hz", 0, 6, 1)
+    simple.text("direct ADC value:  "+f"{result:.0f}", 0, 12, 1)
+    simple.text("18b20 t: "+f"{temp:.4f}°C", 0, 18, 1)
+    simple.text("DHT22 t: "+f"{tempDHT22:.2f}°C", 0, 24, 1)
+    simple.text("DHT22 h: "+f"{humDHT22:.2f}%", 0, 30, 1)
+    simple.text("TDS : "+f"{TDS:.0f} ppm", 0, 36, 1)
+    simple.text("EC  : "+f"{EC_filtered:.0f} us/Cm", 0, 42, 1)
+    if ip_address is not None:
+        simple.text("IP: " + ip_address + ":80", 0, 59, 1)
+    else:
+        simple.text("IP not connect", 0, 59, 1)
+    display.show()
+
+    time.sleep_ms(600)
