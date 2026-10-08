@@ -1,213 +1,13 @@
-import machine
-import time
-import os
-import st7789py as st7789
-import gc
-import blue_font as font
-import onewire, ds18x20
-from machine import Pin
-import ui
 import struct
+import onewire, ds18x20
 import dht
+import time
+from machine import Pin, WDT, reset, I2C, ADC, SoftI2C, UART
+import ssd1306
 import network
 import socket
 
-
 time.sleep(5)
-
-
-# ==================== SD-КАРТА ====================
-for pin_num in (14, 15, 16, 17, 18, 21):
-    machine.Pin(pin_num, machine.Pin.IN, machine.Pin.PULL_UP)
-time.sleep_ms(100)
-
-try:
-    sd = machine.SDCard(slot=1, width=4, sck=14, cmd=15, data=(16, 18, 17, 21))
-    vfs = os.VfsFat(sd)
-    try: 
-        os.mount(vfs, "/sd")
-    except Exception as e:
-        pass
-    print("SD Card OK")
-except Exception as e:
-    print(f"SD Error: {e}")
-
-ow = onewire.OneWire(Pin(7, Pin.OPEN_DRAIN))
-ds = ds18x20.DS18X20(ow)
-
-# =========================================================================
-# 1. АППАРАТНАЯ НАСТРОЙКА IPS-ДИСПЛЕЯ (ST7789)
-# =========================================================================
-# Ручной жесткий сброс чипа дисплея
-rst_pin = machine.Pin(39, machine.Pin.OUT)
-rst_pin.value(0)
-time.sleep_ms(50)
-rst_pin.value(1)
-time.sleep_ms(50)
-
-# Включение подсветки экрана (строго GPIO 46)
-backlight = machine.Pin(46, machine.Pin.OUT)
-backlight.value(1) 
-
-# Конфигурация аппаратного SPI
-spi = machine.SPI(1, 
-                  baudrate=40000000, 
-                  polarity=0, 
-                  phase=0, 
-                  sck=machine.Pin(40), 
-                  mosi=machine.Pin(45))
-
-# Инициализация объекта дисплея (обманываем валидацию встроенным размером 240)
-display = st7789.ST7789(
-    spi, 
-    240, 
-    320, 
-    reset=None, 
-    cs=machine.Pin(42, machine.Pin.OUT), 
-    dc=machine.Pin(41, machine.Pin.OUT), 
-    rotation=0  # Альбомная ориентация экрана
-)
-
-# Ручной возврат физических параметров матрицы Waveshare 1.47" (320x172)
-display.width = 172
-display.height = 320
-display.xstart = 34
-display.ystart = 0  # Смещение по вертикали для центрирования картинки
-
-# Цветовая палитра интерфейса
-BG_COLOR = st7789.color565(15, 15, 25)     # Глубокий темно-синий
-TEXT_COLOR = st7789.YELLOW                 # Желтый текст для телеметрии
-display.fill(BG_COLOR)
-
-# =========================================================================
-# 2. НАСТРОЙКА ШИНЫ I2C И АКСЕЛЕРОМЕТРА (QMI8658)
-# =========================================================================
-I2C_ADDR = 107  # Деситичный адрес чипа QMI8658 (0x6B)
-
-# Инициализация шины I2C на подтвержденных пинах SCL=47, SDA=48
-i2c = machine.I2C(0, sda=machine.Pin(48), scl=machine.Pin(47), freq=400000)
-
-def init_qmi8658():
-    """Последовательность активации датчика из официальной спецификации QST"""
-    i2c.writeto_mem(I2C_ADDR, 0x02, b'\x60') # CTRL1: Инкремент адреса при пакетном чтении
-    i2c.writeto_mem(I2C_ADDR, 0x03, b'\x20') # CTRL2: Настройка акселерометра (диапазон ±2g)
-    i2c.writeto_mem(I2C_ADDR, 0x04, b'\x53') # CTRL3: Настройка гироскопа
-    i2c.writeto_mem(I2C_ADDR, 0x05, b'\x00') # CTRL4: Без изменений
-    i2c.writeto_mem(I2C_ADDR, 0x06, b'\x11') # CTRL5: Включение фильтра LPF
-    i2c.writeto_mem(I2C_ADDR, 0x07, b'\x00') # CTRL6: Без изменений
-    i2c.writeto_mem(I2C_ADDR, 0x08, b'\x03') # CTRL7: Пробуждение (активация акселя и гироскопа)
-    time.sleep_ms(50)
-
-def read_accel():
-    """Чтение 6 байт осей ускорения и сборка Little Endian значений"""
-    # Регистр 0x35 — это начало блока выходных данных акселерометра
-    data = i2c.readfrom_mem(I2C_ADDR, 0x35, 6)
-    
-    # Побайтовая сборка (младший байт идет первым, старший — вторым)
-    x = (data[1] << 8) | data[0]
-    y = (data[3] << 8) | data[2]
-    z = (data[5] << 8) | data[4]
-    
-    # Обработка знака для 16-битных чисел (двухпозиционный код)
-    if x & 0x8000: x -= 65536
-    if y & 0x8000: y -= 65536
-    if z & 0x8000: z -= 65536
-    
-    # Коэффициент масштабирования для выбранного диапазона ±2g составляет 16384 LSB/g
-    scale = 16384.0
-    return x / scale, y / scale, z / scale
-
-# Запуск акселерометра
-try:
-    init_qmi8658()
-    display.text(font, "", 40, 70, st7789.GREEN, BG_COLOR)
-    time.sleep(1)
-    display.fill(BG_COLOR)
-except Exception as e:
-    display.text(font, "IMU ERROR", 40, 70, st7789.RED, BG_COLOR)
-    print("Ошибка инициализации I2C:", e)
-    while True: time.sleep(1)
-
-# =========================================================================
-# 3. ОСНОВНОЙ ЦИКЛ ОБНОВЛЕНИЯ ДАННЫХ
-# =========================================================================
-# ─── один раз после инициализации display ───
-FRAME_W = display.width
-FRAME_H = display.height
-FRAME_SIZE = FRAME_W * FRAME_H * 2
-
-bg_buf      = ui.load("/sd/interface.raw", FRAME_W, FRAME_H)
-frame_buffer = bytearray(FRAME_SIZE)
-
-TEXT_YELLOW = st7789.color565(255, 220, 0)
-TEXT_GREEN  = st7789.color565(0, 255, 120)
-TEXT_RED    = st7789.color565(255, 60, 60)
-TEXT_CYAN   = st7789.color565(80, 220, 255)
-
-# ==================== ФУНКЦИЯ ВОСПРОИЗВЕДЕНИЯ RAW ВИДЕО ====================
-# ==================== ИНИЦИАЛИЗАЦИЯ БУФЕРА КАДРА ====================
-
-# Выносим создание буфера из функции на глобальный уровень.
-# Перед созданием максимально жестко очищаем память от прошлых запусков.
-gc.collect()
-time.sleep_ms(50)
-gc.threshold(gc.mem_free() // 4) # Заставляем GC работать агрессивнее
-
-FRAME_SIZE = display.width * display.height * 2
-
-try:
-    # Создаем ОДИН постоянный буфер. При перезапуске скрипта 
-    # MicroPython будет пытаться переиспользовать или перевыделить его чище.
-    frame_buffer = bytearray(FRAME_SIZE)
-    print("Буфер кадра успешно выделен в PSRAM")
-except MemoryError:
-    print("Критическая ошибка: Не удалось выделить память под буфер кадра!")
-    # Если памяти совсем нет, пробуем аварийную очистку
-    gc.collect()
-    frame_buffer = bytearray(FRAME_SIZE)
-
-def play_raw_video(filename, fps=24):
-    # Размер одного кадра на экране: 320 * 172 * 2 байта = 110080 байт
-    frame_size = display.width * display.height * 2
-    
-    # Создаем буфер кадра. Такой размер автоматически выделится в PSRAM
-    gc.collect()
-    frame_buffer = bytearray(frame_size)
-    
-    # Целевое время на один кадр в миллисекундах (для 24 fps это ~41 мс)
-    frame_delay = int(1000 / fps)
-    
-    try:
-        print(f"Открытие видео {filename}...")
-        with open(filename, "rb") as f:
-            while True:
-                start_time = time.ticks_ms()
-                
-                # Читаем ровно один кадр из файла напрямую в буфер в PSRAM
-                bytes_read = f.readinto(frame_buffer)
-                
-                # Если файл закончился (прочитано меньше, чем размер кадра) — выходим
-                if bytes_read < frame_size:
-                    print("Конец видеофайла")
-                    break
-                
-                # Мгновенно выкидываем весь кадр на дисплей
-                display.blit_buffer(frame_buffer, 0, 0, display.width, display.height)
-                
-                # Считаем, сколько заняло чтение с SD + вывод на экран
-                elapsed = time.ticks_diff(time.ticks_ms(), start_time)
-                
-                # Удерживаем FPS. Если сработали быстрее 41 мс — спим остаток времени
-                sleep_time = frame_delay - elapsed
-                if sleep_time > 0:
-                    time.sleep_ms(sleep_time)
-                    
-    except Exception as e:
-        print(f"Ошибка воспроизведения: {e}")
-
-play_raw_video("/sd/logo_ec.raw", fps=60)
-# ==================== ОСНОВНОЙ ЦИКЛ ====================
-time.sleep(2)
 
 # ========== ПОДКЛЮЧЕНИЕ К WI-FI ==========
 def connect_wifi(ssid, password, timeout=60):
@@ -225,6 +25,207 @@ def connect_wifi(ssid, password, timeout=60):
     print('Network config:', wlan.ifconfig())
     return wlan
 
+# ========== ГЛОБАЛЬНАЯ ПЕРЕМЕННАЯ ==========
+result = 0
+
+# ========== ИНИЦИАЛИЗАЦИЯ ДИСПЛЕЯ ==========
+i2c = I2C(sda=Pin(5), scl=Pin(4))
+display = ssd1306.SSD1306_I2C(128, 64, i2c)
+
+# ========== UART ДЛЯ TDS-МОДУЛЯ ==========
+uart = UART(1, baudrate=115200, tx=17, rx=16)
+
+# ========== ФИЛЬТР КАЛМАНА ==========
+class KalmanFilter:
+    def __init__(self, initial_value=0.0, process_noise=0.01, measurement_noise=1.0):
+        self.x = initial_value
+        self.p = 1.0
+        self.q = process_noise
+        self.r = measurement_noise
+    
+    def update(self, measurement):
+        self.p = self.p + self.q
+        k = self.p / (self.p + self.r)
+        self.x = self.x + k * (measurement - self.x)
+        self.p = (1 - k) * self.p
+        return self.x
+
+# ========== КАЛИБРОВОЧНАЯ ТАБЛИЦА (глобальная) ==========
+DEFAULT_CAL_TABLE = (
+    (1182323, 4.0),
+    (1199969, 344.0),
+    (1205153, 1310.0),
+    (1210169, 3624.0),
+)
+
+CAL_TABLE = list(DEFAULT_CAL_TABLE)
+
+def load_calibration():
+    global CAL_TABLE
+    try:
+        with open('calib.txt', 'r') as f:
+            lines = f.readlines()
+            new_table = []
+            for line in lines:
+                if line.strip():
+                    adc, ec = line.strip().split(',')
+                    new_table.append((int(adc), float(ec)))
+            if len(new_table) == 4:
+                CAL_TABLE = new_table
+                print("Calibration loaded from file")
+            else:
+                print("Invalid calibration file, using defaults")
+                CAL_TABLE = list(DEFAULT_CAL_TABLE)
+    except:
+        print("No calibration file, using defaults")
+        CAL_TABLE = list(DEFAULT_CAL_TABLE)
+
+def save_calibration(table):
+    try:
+        with open('calib.txt', 'w') as f:
+            for adc, ec in table:
+                f.write(f"{adc},{ec}\n")
+        print("Calibration saved")
+    except Exception as e:
+        print("Save error:", e)
+
+# ========== ПОЛНЫЙ ШРИФТ (simple_font) ==========
+simple_font = {
+    # Цифры
+    '0': [[1,1,1],[1,0,1],[1,0,1],[1,0,1],[1,1,1]],
+    '1': [[0,1,0],[1,1,0],[0,1,0],[0,1,0],[1,1,1]],
+    '2': [[1,1,1],[0,0,1],[1,1,1],[1,0,0],[1,1,1]],
+    '3': [[1,1,1],[0,0,1],[0,1,1],[0,0,1],[1,1,1]],
+    '4': [[1,0,1],[1,0,1],[1,1,1],[0,0,1],[0,0,1]],
+    '5': [[1,1,1],[1,0,0],[1,1,1],[0,0,1],[1,1,1]],
+    '6': [[1,1,1],[1,0,0],[1,1,1],[1,0,1],[1,1,1]],
+    '7': [[1,1,1],[0,0,1],[0,1,0],[0,1,0],[0,1,0]],
+    '8': [[1,1,1],[1,0,1],[1,1,1],[1,0,1],[1,1,1]],
+    '9': [[1,1,1],[1,0,1],[1,1,1],[0,0,1],[1,1,1]],
+    # Буквы (верхний регистр)
+    'A': [[0,1,0],[1,0,1],[1,1,1],[1,0,1],[1,0,1]],
+    'B': [[1,1,0],[1,0,1],[1,1,0],[1,0,1],[1,1,0]],
+    'C': [[1,1,1],[1,0,0],[1,0,0],[1,0,0],[1,1,1]],
+    'D': [[1,1,0],[1,0,1],[1,0,1],[1,0,1],[1,1,0]],
+    'E': [[1,1,1],[1,0,0],[1,1,0],[1,0,0],[1,1,1]],
+    'F': [[1,1,1],[1,0,0],[1,1,0],[1,0,0],[1,0,0]],
+    'G': [[1,1,1],[1,0,0],[1,0,1],[1,0,1],[1,1,1]],
+    'H': [[1,0,1],[1,0,1],[1,1,1],[1,0,1],[1,0,1]],
+    'I': [[1,1,1],[0,1,0],[0,1,0],[0,1,0],[1,1,1]],
+    'J': [[0,0,1],[0,0,1],[0,0,1],[1,0,1],[1,1,1]],
+    'K': [[1,0,1],[1,0,1],[1,1,0],[1,0,1],[1,0,1]],
+    'L': [[1,0,0],[1,0,0],[1,0,0],[1,0,0],[1,1,1]],
+    'M': [[1,0,1],[1,1,1],[1,1,1],[1,0,1],[1,0,1]],
+    'N': [[1,0,1],[1,1,1],[1,1,1],[1,1,1],[1,0,1]],
+    'O': [[1,1,1],[1,0,1],[1,0,1],[1,0,1],[1,1,1]],
+    'P': [[1,1,1],[1,0,1],[1,1,1],[1,0,0],[1,0,0]],
+    'Q': [[1,1,1],[1,0,1],[1,0,1],[1,1,1],[0,0,1]],
+    'R': [[1,1,1],[1,0,1],[1,1,0],[1,0,1],[1,0,1]],
+    'S': [[1,1,1],[1,0,0],[1,1,1],[0,0,1],[1,1,1]],
+    'T': [[1,1,1],[0,1,0],[0,1,0],[0,1,0],[0,1,0]],
+    'U': [[1,0,1],[1,0,1],[1,0,1],[1,0,1],[1,1,1]],
+    'V': [[1,0,1],[1,0,1],[1,0,1],[0,1,0],[0,1,0]],
+    'W': [[1,0,1],[1,0,1],[1,1,1],[1,1,1],[1,0,1]],
+    'X': [[1,0,1],[1,0,1],[0,1,0],[1,0,1],[1,0,1]],
+    'Y': [[1,0,1],[1,0,1],[0,1,0],[0,1,0],[0,1,0]],
+    'Z': [[1,1,1],[0,0,1],[0,1,0],[1,0,0],[1,1,1]],
+    # Буквы (нижний регистр)
+    'a': [[0,0,0],[0,0,0],[1,1,1],[0,0,1],[1,1,1]],
+    'b': [[1,0,0],[1,0,0],[1,1,1],[1,0,1],[1,1,1]],
+    'c': [[0,0,0],[0,0,0],[1,1,1],[1,0,0],[1,1,1]],
+    'd': [[0,0,1],[0,0,1],[1,1,1],[1,0,1],[1,1,1]],
+    'e': [[0,0,0],[0,0,0],[1,1,1],[1,1,1],[1,1,0]],
+    'f': [[0,1,1],[0,1,0],[1,1,1],[0,1,0],[0,1,0]],
+    'g': [[0,0,0],[1,1,1],[1,0,1],[1,1,1],[0,0,1]],
+    'h': [[1,0,0],[1,0,0],[1,1,1],[1,0,1],[1,0,1]],
+    'i': [[0,1,0],[0,0,0],[0,1,0],[0,1,0],[0,1,0]],
+    'j': [[0,0,1],[0,0,0],[0,0,1],[0,0,1],[1,1,0]],
+    'k': [[1,0,0],[1,0,0],[1,0,1],[1,1,0],[1,0,1]],
+    'l': [[0,1,0],[0,1,0],[0,1,0],[0,1,0],[0,0,1]],
+    'm': [[0,0,0],[0,0,0],[1,1,1],[1,1,1],[1,0,1]],
+    'n': [[0,0,0],[0,0,0],[1,1,1],[1,0,1],[1,0,1]],
+    'o': [[0,0,0],[0,0,0],[1,1,1],[1,0,1],[1,1,1]],
+    'p': [[0,0,0],[1,1,1],[1,0,1],[1,1,1],[1,0,0]],
+    'q': [[0,0,0],[1,1,1],[1,0,1],[1,1,1],[0,0,1]],
+    'r': [[0,0,0],[0,0,0],[1,1,1],[1,0,0],[1,0,0]],
+    's': [[0,0,0],[0,1,1],[1,1,0],[0,1,1],[1,1,0]],
+    't': [[0,1,0],[0,1,0],[1,1,1],[0,1,0],[0,1,1]],
+    'u': [[0,0,0],[0,0,0],[1,0,1],[1,0,1],[1,1,1]],
+    'v': [[0,0,0],[0,0,0],[1,0,1],[1,0,1],[0,1,0]],
+    'w': [[0,0,0],[0,0,0],[1,0,1],[1,1,1],[1,1,1]],
+    'x': [[0,0,0],[0,0,0],[1,0,1],[0,1,0],[1,0,1]],
+    'y': [[0,0,0],[1,0,1],[1,1,1],[0,0,1],[1,1,1]],
+    'z': [[0,0,0],[0,0,0],[1,1,1],[0,1,0],[1,1,1]],
+    # Символы
+    '.': [[0],[0],[0],[0],[1]],
+    ',': [[0],[0],[0],[0,1],[1,0]],
+    ':': [[0],[1],[0],[1],[0]],
+    ';': [[0],[1],[0],[0,1],[1,0]],
+    '!': [[1],[1],[1],[0],[1]],
+    '?': [[1,1,0],[0,0,1],[0,1,0],[0,0,0],[0,1,0]],
+    "'": [[1],[1],[0],[0],[0]],
+    '"': [[1,0,1],[1,0,1],[0,0,0],[0,0,0],[0,0,0]],
+    '(': [[0,1],[1,0],[1,0],[1,0],[0,1]],
+    ')': [[1,0],[0,1],[0,1],[0,1],[1,0]],
+    '[': [[1,1],[1,0],[1,0],[1,0],[1,1]],
+    ']': [[1,1],[0,1],[0,1],[0,1],[1,1]],
+    '{': [[0,1],[0,1],[1,0],[0,1],[0,1]],
+    '}': [[1,0],[1,0],[0,1],[1,0],[1,0]],
+    '<': [[0,0,1],[0,1,0],[1,0,0],[0,1,0],[0,0,1]],
+    '>': [[1,0,0],[0,1,0],[0,0,1],[0,1,0],[1,0,0]],
+    '/': [[0,0,1],[0,0,1],[0,1,0],[1,0,0],[1,0,0]],
+    '\\': [[1,0,0],[1,0,0],[0,1,0],[0,0,1],[0,0,1]],
+    '|': [[1],[1],[1],[1],[1]],
+    '-': [[0,0,0],[0,0,0],[1,1,1],[0,0,0],[0,0,0]],
+    '_': [[0,0,0],[0,0,0],[0,0,0],[0,0,0],[1,1,1]],
+    '=': [[0,0,0],[1,1,1],[0,0,0],[1,1,1],[0,0,0]],
+    '+': [[0,0,0],[0,1,0],[1,1,1],[0,1,0],[0,0,0]],
+    '*': [[0,0,0],[1,0,1],[0,1,0],[1,0,1],[0,0,0]],
+    '#': [[0,1,0],[1,1,1],[0,1,0],[1,1,1],[0,1,0]],
+    '@': [[1,1,1],[1,0,1],[1,1,1],[1,0,0],[1,1,1]],
+    '$': [[0,1,1],[1,0,0],[1,1,1],[0,0,1],[1,1,0]],
+    '%': [[1,0,1],[0,0,1],[0,1,0],[1,0,0],[1,0,1]],
+    '&': [[1,1,0],[1,0,0],[1,1,1],[1,0,1],[1,1,1]],
+    '^': [[0,1,0],[1,0,1],[0,0,0],[0,0,0],[0,0,0]],
+    '~': [[0,0,0],[0,1,1],[1,1,0],[0,0,0],[0,0,0]],
+    ' ': [[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0]],
+    '°': [[1,1,1],[1,0,1],[1,1,1],[0,0,0],[0,0,0]],
+}
+
+class SimpleFont:
+    def __init__(self, oled):
+        self.oled = oled
+        
+    def draw_char(self, char, x, y, color=1):
+        if char in simple_font:
+            glyph = simple_font[char]
+            for row in range(len(glyph)):
+                for col in range(len(glyph[row])):
+                    if glyph[row][col]:
+                        self.oled.pixel(x + col, y + row, color)
+            return len(glyph[0]) if glyph[0] else 1
+        return 3
+    
+    def text(self, string, x, y, color=1):
+        for char in string:
+            width = self.draw_char(char, x, y, color)
+            x += width + 1
+
+simple = SimpleFont(display)
+
+# ========== СТАРТОВОЕ ЗАПОЛНЕНИЕ ЭКРАНА ==========
+display.fill(0)
+simple.text("TDS Trends INDUCTION METHOD", 0, 0, 1)
+simple.text("Create an access point.", 0, 6, 1)
+simple.text("SSID: my || password:220319840", 0, 12, 1)
+simple.text("60-second timeout", 0, 18, 1)
+simple.text("if it fails to connect", 0, 24, 1)
+simple.text("to reconnect", 0, 30, 1)
+simple.text("Cycle the power.", 0, 36, 1)
+simple.text("Turn it off for 30 seconds.", 0, 42, 1)
+simple.text("and turn it back on", 0, 59, 1)
+display.show()
+
 # ========== ПОДКЛЮЧЕНИЕ WI-FI ==========
 wlan = connect_wifi("my", "220319840", 60)
 if wlan is not None:
@@ -238,6 +239,65 @@ server_socket = socket.socket()
 server_socket.bind(addr)
 server_socket.listen(1)
 server_socket.setblocking(False)
+
+# ========== ДАТЧИКИ ==========
+ow = onewire.OneWire(Pin(14, Pin.OPEN_DRAIN))
+ds = ds18x20.DS18X20(ow)
+
+# ========== ЗАГРУЗКА КАЛИБРОВКИ ==========
+load_calibration()
+
+# ========== ФУНКЦИИ ИЗМЕРЕНИЙ ==========
+def ONE_TDSEC(freq, duty, samples, cmd, timeout_ms=4000):
+    frame = bytearray()
+    frame.append(0x0F)
+    frame.extend(struct.pack('<I', freq))
+    frame.extend(struct.pack('<I', duty))
+    frame.append(samples)
+    frame.append(cmd)
+    uart.write(frame)
+    start = time.ticks_ms()
+    response = bytearray()
+    while time.ticks_diff(time.ticks_ms(), start) < timeout_ms:
+        if uart.any():
+            response.extend(uart.read())
+            if len(response) >= 6:
+                if response[0] == 0xF0:
+                    result = struct.unpack('<I', response[1:5])[0]
+                    return result
+                else:
+                    return None
+        time.sleep_ms(10)
+    return None
+
+def adc_to_microsiemens(adc_value, temp_c):
+    global CAL_TABLE
+    if adc_value is None:
+        return None
+
+    # Интерполяция / экстраполяция по глобальной таблице
+    num_points = len(CAL_TABLE)
+    if adc_value <= CAL_TABLE[0][0]:
+        x0, y0 = CAL_TABLE[0]
+        x1, y1 = CAL_TABLE[1]
+        k = (y1 - y0) / (x1 - x0)
+        ec = y0 + k * (adc_value - x0)
+    elif adc_value >= CAL_TABLE[-1][0]:
+        x0, y0 = CAL_TABLE[-2]
+        x1, y1 = CAL_TABLE[-1]
+        k = (y1 - y0) / (x1 - x0)
+        ec = y1 + k * (adc_value - x1)
+    else:
+        for i in range(num_points - 1):
+            if CAL_TABLE[i][0] <= adc_value <= CAL_TABLE[i+1][0]:
+                x0, y0 = CAL_TABLE[i]
+                x1, y1 = CAL_TABLE[i+1]
+                k = (y1 - y0) / (x1 - x0)
+                ec = y0 + k * (adc_value - x0)
+                break
+
+    ec = max(0.0, ec)
+    return round(ec, 2)
 
 # ========== ФУНКЦИЯ ДЛЯ ВЕБ-СТРАНИЦЫ (с формой калибровки) ==========
 def web_page(temp, tempDHT22, humDHT22, TDS, EC, adc_raw, freq, table):
@@ -286,38 +346,173 @@ def web_page(temp, tempDHT22, humDHT22, TDS, EC, adc_raw, freq, table):
     </body></html>""" % (freq, adc_raw, temp, tempDHT22, humDHT22, TDS, EC, rows_html)
     return html
 
+# ========== ФИЛЬТР КАЛМАНА (экземпляр) ==========
+kalman = KalmanFilter(initial_value=0.0, process_noise=0.1, measurement_noise=1.0)
+
+# ========== ЛОГГИРОВАНИЕ В CSV ==========
+LOG_INTERVAL = 10  # секунд
+MAX_LOG_ENTRIES = 1000
+log_counter = 0
+log_index = 0  # индекс для перезаписи
+
+def init_log_file():
+    """Создаёт файл лога с заголовком, если его нет"""
+    try:
+        with open('log.csv', 'r') as f:
+            # Проверяем, есть ли заголовок
+            first_line = f.readline()
+            if not first_line.startswith('Частота;Температура_18B20;ADC_сырой;Температура_DHT22;Влажность_DHT22;EC_откалиброванный'):
+                # Если заголовка нет, пересоздаём
+                with open('log.csv', 'w') as fw:
+                    fw.write('Частота;Температура_18B20;ADC_сырой;Температура_DHT22;Влажность_DHT22;EC_откалиброванный\n')
+    except:
+        # Файл не существует - создаём
+        with open('log.csv', 'w') as f:
+            f.write('Частота;Температура_18B20;ADC_сырой;Температура_DHT22;Влажность_DHT22;EC_откалиброванный\n')
+
+def write_log_entry(freq, temp18b20, adc_raw, tempDHT22, humDHT22, ec):
+    """Записывает одну строку в CSV с перезаписью при достижении 1000 записей"""
+    global log_index
+    
+    # Формируем строку данных с заменой точки на запятую
+    freq_str = f"{freq:.0f}".replace('.', ',')
+    temp18b20_str = f"{temp18b20:.2f}".replace('.', ',')
+    adc_raw_str = str(adc_raw)
+    tempDHT22_str = f"{tempDHT22:.2f}".replace('.', ',')
+    humDHT22_str = f"{humDHT22:.2f}".replace('.', ',')
+    ec_str = f"{ec:.2f}".replace('.', ',')
+    
+    data_line = f"{freq_str};{temp18b20_str};{adc_raw_str};{tempDHT22_str};{humDHT22_str};{ec_str}\n"
+    
+    try:
+        # Сначала проверим существование файла и количество строк
+        line_count = 0
+        try:
+            with open('log.csv', 'r') as f:
+                # Считаем только количество строк, не загружая в память
+                for _ in f:
+                    line_count += 1
+        except:
+            # Файл не существует
+            line_count = 0
+        
+        if line_count <= 1:
+            # Файл пустой или только заголовок
+            with open('log.csv', 'w') as f:
+                f.write('Частота;Температура_18B20;ADC_сырой;Температура_DHT22;Влажность_DHT22;EC_откалиброванный\n')
+                f.write(data_line)
+            log_index = 1
+            return
+        
+        # Если записей меньше MAX_LOG_ENTRIES + 1 (заголовок)
+        if line_count < MAX_LOG_ENTRIES + 1:
+            # Просто добавляем в конец
+            with open('log.csv', 'a') as f:
+                f.write(data_line)
+            log_index = line_count  # номер последней записи
+        else:
+            # Нужно перезаписать файл
+            # Читаем заголовок
+            with open('log.csv', 'r') as f:
+                header = f.readline()
+            
+            # Создаём временный файл
+            temp_filename = 'log_temp.csv'
+            
+            # Копируем все строки кроме той, которую заменяем
+            with open('log.csv', 'r') as src, open(temp_filename, 'w') as dst:
+                # Пишем заголовок
+                dst.write(header)
+                
+                # Пропускаем заголовок
+                src.readline()
+                
+                # Читаем построчно и копируем, заменяя нужную строку
+                current_index = 0
+                for line in src:
+                    if current_index == log_index:
+                        # Заменяем эту строку
+                        dst.write(data_line)
+                    else:
+                        dst.write(line)
+                    current_index += 1
+            
+            # Заменяем оригинальный файл временным
+            try:
+                import os
+                os.remove('log.csv')
+                os.rename(temp_filename, 'log.csv')
+            except:
+                # Если не получается переименовать, пробуем по-другому
+                with open('log.csv', 'w') as f:
+                    with open(temp_filename, 'r') as src:
+                        for line in src:
+                            f.write(line)
+                try:
+                    os.remove(temp_filename)
+                except:
+                    pass
+            
+            # Увеличиваем индекс для следующей записи
+            log_index = (log_index + 1) % MAX_LOG_ENTRIES
+                
+    except Exception as e:
+        print("Log write error:", e)
+        # В случае ошибки пытаемся пересоздать файл
+        try:
+            with open('log.csv', 'w') as f:
+                f.write('Частота;Температура_18B20;ADC_сырой;Температура_DHT22;Влажность_DHT22;EC_откалиброванный\n')
+                f.write(data_line)
+            log_index = 1
+        except:
+            pass
+
+# Инициализируем файл лога
+init_log_file()
+
+# ========== ОСНОВНОЙ ЦИКЛ ==========
+last_log_time = time.time()
 
 while True:
+    # ---- Чтение 18B20 ----
     roms = ds.scan()
-    # Чтение температуры
     try:
         ds.convert_temp()
         temp = ds.read_temp(roms[0])
     except Exception as e:
         temp = 200
 
-    # 1) восстановить фон (быстрая C-копия)
-    frame_buffer[:] = bg_buf
+    # ---- Чтение DHT22 ----
+    sensor_dht22 = dht.DHT22(Pin(33))
+    try:
+        sensor_dht22.measure()
+        tempDHT22 = sensor_dht22.temperature()
+        humDHT22 = sensor_dht22.humidity()
+    except Exception as e:
+        tempDHT22 = 200
+        humDHT22 = 200
+
+    # ---- TDS-модуль ----
+    freq = 1200000
+    freq_ind = freq
+    freq = int(168000000 / freq)
+    dutypwm = int(freq / 2)
+
+    result = ONE_TDSEC(freq, dutypwm, 7, 1, timeout_ms=4000)
 
     try:
-        # Считываем реальные физические перегрузки в g
-        ax, ay, az = read_accel()
-        f=60
-        ui.text_or(frame_buffer, FRAME_W, FRAME_H, font,f"Freq: {az:+.2f} Hz", 20, f+20, TEXT_CYAN)
-        ui.text_or(frame_buffer, FRAME_W, FRAME_H, font,f"ADC: {az:+.2f}", 20, f+40, TEXT_CYAN)
-        ui.text_or(frame_buffer, FRAME_W, FRAME_H, font,f"T: {az:+.2f} °C", 20, f+60, TEXT_CYAN)
-        ui.text_or(frame_buffer, FRAME_W, FRAME_H, font,f"DHT22 t: {az:+.2f} °C", 20, f+80, TEXT_CYAN)
-        ui.text_or(frame_buffer, FRAME_W, FRAME_H, font,f"DHT22 h: {az:+.2f} %", 20, f+100, TEXT_CYAN)
-        ui.text_or(frame_buffer, FRAME_W, FRAME_H, font,f"TDS: {az:+.2f} ppm", 20, f+120, TEXT_CYAN)
-        ui.text_or(frame_buffer, FRAME_W, FRAME_H, font,f"EC: {az:+.2f} uS", 20, f+140, TEXT_CYAN)
-        ui.text_or(frame_buffer, FRAME_W, FRAME_H, font,f"pH_adc: {az:+.2f}", 20, f+160, TEXT_CYAN)
-        ui.text_or(frame_buffer, FRAME_W, FRAME_H, font,f"pH: {az:+.2f}", 20, f+180, TEXT_CYAN)
-        # 3) вывести одним куском
-        display.blit_buffer(frame_buffer, 0, 0, FRAME_W, FRAME_H)       
-    
-    except Exception as e:
-        #display.text(font, "READ ERROR  ", 20, 70, st7789.RED, BG_COLOR)
-        print("Ошибка чтения осей:", e)
+        EC = adc_to_microsiemens(result, temp)
+    except:
+        EC = 0
+
+    EC_filtered = kalman.update(EC)
+    TDS = EC_filtered * 0.5
+
+    # ---- ЛОГГИРОВАНИЕ ----
+    current_time = time.time()
+    if current_time - last_log_time >= LOG_INTERVAL:
+        write_log_entry(freq_ind, temp, result, tempDHT22, humDHT22, EC_filtered)
+        last_log_time = current_time
 
     # ---- ОБРАБОТКА ВЕБ-ЗАПРОСОВ (GET и POST) ----
     try:
@@ -370,4 +565,21 @@ while True:
         # Если нет соединения – просто игнорируем
         pass
 
-    time.sleep_ms(1) # Периодичность обновления экрана (10 раз в секунду)
+    # ---- ОБНОВЛЕНИЕ ДИСПЛЕЯ ----
+    display.fill(0)
+    simple.text("TDS Trends INDUCTION METHOD", 0, 0, 1)
+    simple.text("current frequency: "+f"{freq_ind:.0f} Hz", 0, 6, 1)
+    simple.text("direct ADC value:  "+f"{result:.0f}", 0, 12, 1)
+    simple.text("18b20 t: "+f"{temp:.4f}°C", 0, 18, 1)
+    simple.text("DHT22 t: "+f"{tempDHT22:.2f}°C", 0, 24, 1)
+    simple.text("DHT22 h: "+f"{humDHT22:.2f}%", 0, 30, 1)
+    simple.text("TDS : "+f"{TDS:.0f} ppm", 0, 36, 1)
+    simple.text("EC  : "+f"{EC_filtered:.0f} us/Cm", 0, 42, 1)
+    if ip_address is not None:
+        simple.text("IP: " + ip_address + ":80", 0, 59, 1)
+    else:
+        simple.text("IP not connect", 0, 59, 1)
+    display.show()
+
+
+    time.sleep_ms(600)

@@ -25,7 +25,7 @@ if not "%~1" == "" goto debugFile
 
 @echo on 
 
-"C:\Program Files\IAR Systems\Embedded Workbench 9.1\common\bin\cspybat" -f "D:\workspace kicad\PWR_MOD\STM32 projects\EWARM\settings\workspace diptrace.workspace_diptrace.general.xcl" --backend -f "D:\workspace kicad\PWR_MOD\STM32 projects\EWARM\settings\workspace diptrace.workspace_diptrace.driver.xcl" 
+"C:\Program Files\IAR Systems\Embedded Workbench 9.1\common\bin\cspybat" -f "D:\workspace kicad\EC_TDS version 4\EC_TDS version 4\EC_TDS version 4\EC_TDS\STM32 projects\EWARM\settings\workspace diptrace.workspace_diptrace.general.xcl" --backend -f "D:\workspace kicad\EC_TDS version 4\EC_TDS version 4\EC_TDS version 4\EC_TDS\STM32 projects\EWARM\settings\workspace diptrace.workspace_diptrace.driver.xcl" 
 
 @echo off 
 goto end 
@@ -34,7 +34,7 @@ goto end
 
 @echo on 
 
-"C:\Program Files\IAR Systems\Embedded Workbench 9.1\common\bin\cspybat" -f "D:\workspace kicad\PWR_MOD\STM32 projects\EWARM\settings\workspace diptrace.workspace_diptrace.general.xcl" "--debug_file=%~1" --backend -f "D:\workspace kicad\PWR_MOD\STM32 projects\EWARM\settings\workspace diptrace.workspace_diptrace.driver.xcl" 
+"C:\Program Files\IAR Systems\Embedded Workbench 9.1\common\bin\cspybat" -f "D:\workspace kicad\EC_TDS version 4\EC_TDS version 4\EC_TDS version 4\EC_TDS\STM32 projects\EWARM\settings\workspace diptrace.workspace_diptrace.general.xcl" "--debug_file=%~1" --backend -f "D:\workspace kicad\EC_TDS version 4\EC_TDS version 4\EC_TDS version 4\EC_TDS\STM32 projects\EWARM\settings\workspace diptrace.workspace_diptrace.driver.xcl" 
 
 @echo off 
 :end

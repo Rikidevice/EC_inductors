@@ -1,25 +1,25 @@
-"D:\workspace kicad\PWR_MOD\STM32 projects\Drivers\STM32F4xx_HAL_Driver\Src\stm32f4xx_hal_gpio.c"
+"D:\workspace kicad\EC_TDS version 4\EC_TDS version 4\EC_TDS version 4\EC_TDS\STM32 projects\Drivers\STM32F4xx_HAL_Driver\Src\stm32f4xx_hal_gpio.c"
 -std=c11
 -ferror-limit=0
 -fbracket-depth=512
 -funsigned-char
 -MD
 -MF
-D:\workspace kicad\PWR_MOD\STM32 projects\EWARM\workspace diptrace\BrowseInfo\Drivers\STM32F4xx_HAL_Driver\stm32f4xx_hal_gpio.pbi.dep
+D:\workspace kicad\EC_TDS version 4\EC_TDS version 4\EC_TDS version 4\EC_TDS\STM32 projects\EWARM\workspace diptrace\BrowseInfo\Drivers\STM32F4xx_HAL_Driver\stm32f4xx_hal_gpio.pbi.dep
 -o
-D:\workspace kicad\PWR_MOD\STM32 projects\EWARM\workspace diptrace\BrowseInfo\Drivers\STM32F4xx_HAL_Driver\stm32f4xx_hal_gpio.pbi
+D:\workspace kicad\EC_TDS version 4\EC_TDS version 4\EC_TDS version 4\EC_TDS\STM32 projects\EWARM\workspace diptrace\BrowseInfo\Drivers\STM32F4xx_HAL_Driver\stm32f4xx_hal_gpio.pbi
 -I
-D:\workspace kicad\PWR_MOD\STM32 projects\Drivers\STM32F4xx_HAL_Driver\Src
+D:\workspace kicad\EC_TDS version 4\EC_TDS version 4\EC_TDS version 4\EC_TDS\STM32 projects\Drivers\STM32F4xx_HAL_Driver\Src
 -I
-D:\workspace kicad\PWR_MOD\STM32 projects\EWARM/../Core/Inc\
+D:\workspace kicad\EC_TDS version 4\EC_TDS version 4\EC_TDS version 4\EC_TDS\STM32 projects\EWARM/../Core/Inc\
 -I
-D:\workspace kicad\PWR_MOD\STM32 projects\EWARM/../Drivers/STM32F4xx_HAL_Driver/Inc\
+D:\workspace kicad\EC_TDS version 4\EC_TDS version 4\EC_TDS version 4\EC_TDS\STM32 projects\EWARM/../Drivers/STM32F4xx_HAL_Driver/Inc\
 -I
-D:\workspace kicad\PWR_MOD\STM32 projects\EWARM/../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy\
+D:\workspace kicad\EC_TDS version 4\EC_TDS version 4\EC_TDS version 4\EC_TDS\STM32 projects\EWARM/../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy\
 -I
-D:\workspace kicad\PWR_MOD\STM32 projects\EWARM/../Drivers/CMSIS/Device/ST/STM32F4xx/Include\
+D:\workspace kicad\EC_TDS version 4\EC_TDS version 4\EC_TDS version 4\EC_TDS\STM32 projects\EWARM/../Drivers/CMSIS/Device/ST/STM32F4xx/Include\
 -I
-D:\workspace kicad\PWR_MOD\STM32 projects\EWARM/../Drivers/CMSIS/Include\
+D:\workspace kicad\EC_TDS version 4\EC_TDS version 4\EC_TDS version 4\EC_TDS\STM32 projects\EWARM/../Drivers/CMSIS/Include\
 -I
 C:\Program Files\IAR Systems\Embedded Workbench 9.1\arm\inc\c\aarch32
 -I
@@ -27,15 +27,15 @@ C:\Program Files\IAR Systems\Embedded Workbench 9.1\arm\inc
 -I
 C:\Program Files\IAR Systems\Embedded Workbench 9.1\arm\inc\c
 -I
-D:\workspace kicad\PWR_MOD\STM32 projects\Core\Inc
+D:\workspace kicad\EC_TDS version 4\EC_TDS version 4\EC_TDS version 4\EC_TDS\STM32 projects\Core\Inc
 -I
-D:\workspace kicad\PWR_MOD\STM32 projects\Drivers\STM32F4xx_HAL_Driver\Inc
+D:\workspace kicad\EC_TDS version 4\EC_TDS version 4\EC_TDS version 4\EC_TDS\STM32 projects\Drivers\STM32F4xx_HAL_Driver\Inc
 -I
-D:\workspace kicad\PWR_MOD\STM32 projects\Drivers\STM32F4xx_HAL_Driver\Inc\Legacy
+D:\workspace kicad\EC_TDS version 4\EC_TDS version 4\EC_TDS version 4\EC_TDS\STM32 projects\Drivers\STM32F4xx_HAL_Driver\Inc\Legacy
 -I
-D:\workspace kicad\PWR_MOD\STM32 projects\Drivers\CMSIS\Device\ST\STM32F4xx\Include
+D:\workspace kicad\EC_TDS version 4\EC_TDS version 4\EC_TDS version 4\EC_TDS\STM32 projects\Drivers\CMSIS\Device\ST\STM32F4xx\Include
 -I
-D:\workspace kicad\PWR_MOD\STM32 projects\Drivers\CMSIS\Include
+D:\workspace kicad\EC_TDS version 4\EC_TDS version 4\EC_TDS version 4\EC_TDS\STM32 projects\Drivers\CMSIS\Include
 -D__CHAR_BITS__=8
 -D__CHAR_MAX__=0xff
 -D__CHAR_MIN__=0

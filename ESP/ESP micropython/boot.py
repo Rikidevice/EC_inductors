@@ -5,10 +5,15 @@ import st7789py as st7789
 import gc
 import blue_font as font
 import onewire, ds18x20
-from machine import Pin
+from machine import Pin, UART
 import ui
-
-# ==================== SD-КАРТА ====================
+import struct
+import dht
+import network
+import socket
+time.sleep(5)
+button = Pin(6, Pin.IN, Pin.PULL_UP)
+uart = UART(1, baudrate=115200, tx=9, rx=10)
 for pin_num in (14, 15, 16, 17, 18, 21):
     machine.Pin(pin_num, machine.Pin.IN, machine.Pin.PULL_UP)
 time.sleep_ms(100)
@@ -201,8 +206,38 @@ play_raw_video("/sd/logo_ec.raw", fps=60)
 # ==================== ОСНОВНОЙ ЦИКЛ ====================
 time.sleep(2)
 
+# ==================== обмен с STM32 ====================
+def ONE_TDSEC(freq, duty, samples, cmd, timeout_ms=4000):
+    frame = bytearray()
+    frame.append(0x0F)
+    frame.extend(struct.pack('<I', freq))
+    frame.extend(struct.pack('<I', duty))
+    frame.append(samples)
+    frame.append(cmd)
+    uart.write(frame)
+    start = time.ticks_ms()
+    response = bytearray()
+    while time.ticks_diff(time.ticks_ms(), start) < timeout_ms:
+        if uart.any():
+            response.extend(uart.read())
+            if len(response) >= 6:
+                if response[0] == 0xF0:
+                    result = struct.unpack('<I', response[1:5])[0]
+                    return result
+                else:
+                    return None
+        time.sleep_ms(10)
+    return None
+
 while True:
-    roms = ds.scan()
+    # ---- TDS-модуль ----
+    freq = 1200000
+    freq_ind = freq
+    freq = int(168000000 / freq)
+    dutypwm = int(freq / 2)
+
+    result = ONE_TDSEC(freq, dutypwm, 7, 1, timeout_ms=4000)
+    
     # Чтение температуры
     try:
         ds.convert_temp()
@@ -216,26 +251,23 @@ while True:
     try:
         # Считываем реальные физические перегрузки в g
         ax, ay, az = read_accel()
-        
-        # Выводим форматированные строки. Пробелы в конце строки очищают старые цифры
-        #display.text(font, f"X: {ax:+.2f} g   ", 20, 20, TEXT_COLOR, BG_COLOR)
-        #display.text(font, f"Y: {ay:+.2f} g   ", 20, 30, TEXT_COLOR, BG_COLOR)
-        #display.text(font, f"Z: {az:+.2f} g   ", 20, 40, TEXT_COLOR, BG_COLOR)
-        #display.text(font, f"T: {temp:+.2f} C   ", 20, 50, TEXT_COLOR, BG_COLOR)
-        # 2) наложить поверх светящийся текст (OR)
-        ui.text_or(frame_buffer, FRAME_W, FRAME_H, font,
-                f"X {ax:+.2f}", 20, 20, TEXT_CYAN)
-        ui.text_or(frame_buffer, FRAME_W, FRAME_H, font,
-                f"Y {ay:+.2f}", 20, 40, TEXT_CYAN)
-        ui.text_or(frame_buffer, FRAME_W, FRAME_H, font,
-                f"Z {az:+.2f}", 20, 60, TEXT_CYAN)
-        ui.text_or(frame_buffer, FRAME_W, FRAME_H, font,
-                f"T {temp:+.2f}", 20, 80, TEXT_YELLOW)
-    
+        f=60
+        ui.text_or(frame_buffer, FRAME_W, FRAME_H, font,f"Freq: {freq_ind:+.0f} Hz", 20, f+20, TEXT_CYAN)
+        ui.text_or(frame_buffer, FRAME_W, FRAME_H, font,f"ADC: {result:.0f}", 20, f+40, TEXT_CYAN)
+        ui.text_or(frame_buffer, FRAME_W, FRAME_H, font,f"T: {az:+.2f} °C", 20, f+60, TEXT_CYAN)
+        ui.text_or(frame_buffer, FRAME_W, FRAME_H, font,f"DHT22 t: {az:+.2f} °C", 20, f+80, TEXT_CYAN)
+        ui.text_or(frame_buffer, FRAME_W, FRAME_H, font,f"DHT22 h: {az:+.2f} %", 20, f+100, TEXT_CYAN)
+        ui.text_or(frame_buffer, FRAME_W, FRAME_H, font,f"TDS: {az:+.2f} ppm", 20, f+120, TEXT_CYAN)
+        ui.text_or(frame_buffer, FRAME_W, FRAME_H, font,f"EC: {az:+.2f} uS", 20, f+140, TEXT_CYAN)
+        ui.text_or(frame_buffer, FRAME_W, FRAME_H, font,f"pH_adc: {az:+.2f}", 20, f+160, TEXT_CYAN)
+        ui.text_or(frame_buffer, FRAME_W, FRAME_H, font,f"pH: {az:+.2f}", 20, f+180, TEXT_CYAN)
         # 3) вывести одним куском
-        display.blit_buffer(frame_buffer, 0, 0, FRAME_W, FRAME_H)       
-    
+        display.blit_buffer(frame_buffer, 0, 0, FRAME_W, FRAME_H)        
     except Exception as e:
         #display.text(font, "READ ERROR  ", 20, 70, st7789.RED, BG_COLOR)
         print("Ошибка чтения осей:", e)
-    time.sleep_ms(1) # Периодичность обновления экрана (10 раз в секунду)
+    if button.value() == 0:
+        break
+    else:
+        print("0")
+    time.sleep_ms(200) 
