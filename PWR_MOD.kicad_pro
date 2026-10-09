@@ -80,19 +80,7 @@
           ""
         ],
         [
-          "clearance|145852500|138200000|603cac20-322f-4ab4-b125-46a220b7c5f3|e3c9fedc-3a67-4fa7-bebe-cd70d4f57e67",
-          ""
-        ],
-        [
-          "clearance|92887500|126600000|fa6a730e-f352-4255-a8c1-2d90379377c2|4a878eed-b9b7-4ffe-b54a-df37cd416927",
-          ""
-        ],
-        [
           "clearance|95352500|126400000|60eee176-cc80-4b7a-9f02-57037ad45b50|b2cc6f1b-1f04-4a5b-b3d2-b896b370573d",
-          ""
-        ],
-        [
-          "clearance|95732500|124400000|ec62864c-7dbe-4d81-95bd-b691d84f2c1a|4ca36789-809f-42f5-9268-b6fd8978859f",
           ""
         ],
         [
@@ -571,7 +559,7 @@
       "no_connect_dangling": "warning",
       "pin_not_connected": "error",
       "pin_not_driven": "error",
-      "pin_to_pin": "warning",
+      "pin_to_pin": "error",
       "power_pin_not_driven": "error",
       "same_local_global_label": "warning",
       "similar_label_and_power": "warning",
@@ -764,7 +752,7 @@
       },
       {
         "filename": "без_имени.kicad_sch",
-        "name": "Rx & Tx",
+        "name": "ADS",
         "uuid": "7aa4e703-bf0a-4c2b-92d4-fdc3f8be362f"
       },
       {
@@ -773,7 +761,7 @@
         "uuid": "36c4ce45-906a-47f8-8f3a-15d713e8932a"
       }
     ],
-    "used_designators": "nRST_STM32,#PWR1-17,D1-6,D8-11,L1-3,PWR_DC1,C1-32,C34-60,J1-7,J11,R1-109,BAT1,U1-22,Y1-2,18b20,DD1,DHT22,EN_ESP32,SSD1306,pH1,Q1-7,RST_ESP32,DC::DC1,GAIN1-2,A1-2",
+    "used_designators": "L1-3,D1-6,D8-11,nRST_STM32,#PWR1-17,PWR_DC1,C1-32,C34-60,R1-109,J1-7,J11,BAT1,U1-22,Y1-2,18b20,DD1,DHT22,pH1,SSD1306,EN_ESP32,Q1-7,RST_ESP32,DC::DC1,GAIN1-2,A1-2",
     "variants": []
   },
   "sheets": [
@@ -790,12 +778,12 @@
       "MCU ESP32"
     ],
     [
-      "7aa4e703-bf0a-4c2b-92d4-fdc3f8be362f",
-      "Rx & Tx"
-    ],
-    [
       "36c4ce45-906a-47f8-8f3a-15d713e8932a",
       "pH"
+    ],
+    [
+      "7aa4e703-bf0a-4c2b-92d4-fdc3f8be362f",
+      "ADS"
     ]
   ],
   "text_variables": {},
