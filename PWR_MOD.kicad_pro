@@ -84,10 +84,6 @@
           ""
         ],
         [
-          "clearance|92887500|125600000|31b02358-e169-437c-8d37-e7eda52f13fc|d96ee5a2-16f5-4a16-858f-dac80a6a6bc4",
-          ""
-        ],
-        [
           "clearance|92887500|126600000|fa6a730e-f352-4255-a8c1-2d90379377c2|4a878eed-b9b7-4ffe-b54a-df37cd416927",
           ""
         ],
@@ -777,7 +773,7 @@
         "uuid": "36c4ce45-906a-47f8-8f3a-15d713e8932a"
       }
     ],
-    "used_designators": "nRST_STM32,#PWR1-17,D1-6,D8-11,L1-3,PWR_DC1,C1-30,C34-60,J1-7,J11,R1-105,BAT1,U1-22,Y1-2,18b20,DD1,DHT22,EN_ESP32,SSD1306,pH1,Q1-7,RST_ESP32,DC::DC1,GAIN1-2,A1-2",
+    "used_designators": "nRST_STM32,#PWR1-17,D1-6,D8-11,L1-3,PWR_DC1,C1-32,C34-60,J1-7,J11,R1-109,BAT1,U1-22,Y1-2,18b20,DD1,DHT22,EN_ESP32,SSD1306,pH1,Q1-7,RST_ESP32,DC::DC1,GAIN1-2,A1-2",
     "variants": []
   },
   "sheets": [

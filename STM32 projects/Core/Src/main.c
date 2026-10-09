@@ -239,7 +239,15 @@ int main(void)
   HAL_GPIO_WritePin(GPIOE, GPIO_PIN_13, GPIO_PIN_SET);
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
   HAL_UART_Receive_IT(&huart2, &rx_byte, 1);//обязательный запуск для первого запуска
-  ADS1232_CS_HIGH();
+  ADS1232_CS_LOW();
+  
+  MCP3551_CS_LOW();
+  HAL_Delay(100);
+  uint8_t tx_buffer[4] = {0xFF, 0xFF, 0xFF, 0xFF};
+  uint8_t rx_buffer[4] = {0};
+  HAL_SPI_TransmitReceive(&hspi2, tx_buffer, rx_buffer, 4, HAL_MAX_DELAY);
+  MCP3551_CS_HIGH();
+  HAL_Delay(100);
   /* USER CODE END 2 */
 
   /* Infinite loop */
